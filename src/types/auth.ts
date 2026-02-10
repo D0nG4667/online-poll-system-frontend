@@ -2,9 +2,10 @@
 
 export interface User {
 	id: string; // uuid
-	display: string;
 	email: string;
-	has_usable_password: boolean;
+	first_name: string;
+	last_name: string;
+	is_active: boolean;
 }
 
 export interface Provider {
@@ -60,6 +61,7 @@ export interface AuthData {
 		email?: string;
 		provider?: string;
 	}>;
+	errors?: AuthError[];
 }
 
 export interface AllauthResponse<T = AuthData> {

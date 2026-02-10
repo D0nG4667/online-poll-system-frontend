@@ -39,7 +39,6 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 	const schema = mode === "login" ? loginSchema : registerSchema;
 
 	const form = useForm<AuthFormValues>({
-		// @ts-expect-error - Zod resolver type mismatch with conditional schema
 		resolver: zodResolver(schema),
 		defaultValues: {
 			email: "",
@@ -74,10 +73,9 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 
 			if (response.status === 200 || response.status === 201) {
 				// Extract user and token from Allauth Headless response structure
-				const user = response.data?.user;
-				const token = response.meta?.session_token || null;
-
-				if (user) {
+				if (response.data?.user && response.meta?.session_token) {
+					const user = response.data.user;
+					const token = response.meta.session_token;
 					console.log("Auth Successful, setting credentials...");
 					dispatch(setCredentials({ user, token }));
 					const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";

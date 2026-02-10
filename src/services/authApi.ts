@@ -25,7 +25,7 @@ export const authApi = createApi({
 	reducerPath: "authApi",
 	baseQuery: fetchBaseQuery({
 		// Base URL points to the headless APP client root for token-based auth
-		baseUrl: "http://localhost:8000/_allauth/app/v1",
+		baseUrl: `${process.env.NEXT_PUBLIC_API_URL || ""}/_allauth/app/v1`,
 		prepareHeaders: (headers, { getState }) => {
 			const token = (getState() as RootState).auth.token;
 			if (token) {

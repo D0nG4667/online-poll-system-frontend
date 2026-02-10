@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useLoginMutation, useSignupMutation } from "@/services/authApi";
 import { setCredentials } from "@/store/features/auth/authSlice";
 import { useAppDispatch } from "@/store/hooks";
+import type { AllauthResponse, AuthError, Flow } from "@/types/auth";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
 	mode: "login" | "register";
@@ -54,7 +55,7 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 		try {
 			console.log(`Attempting ${mode} with:`, { email: data.email });
 
-			let response: any;
+			let response: AllauthResponse;
 			if (mode === "login") {
 				response = await login({
 					email: data.email,
@@ -86,24 +87,25 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 				}
 			} else if (response.errors) {
 				console.warn("Auth Response contains errors:", response.errors);
-				response.errors.forEach((err: any) => {
+				response.errors.forEach((err: AuthError) => {
 					if (err.param) {
-						form.setError(err.param as any, { message: err.message });
+						form.setError(err.param as keyof AuthFormValues, {
+							message: err.message,
+						});
 					}
 				});
 			}
-		} catch (error: any) {
+		} catch (err: unknown) {
+			const error = err as AllauthResponse;
 			console.error("--- SUBMISSION EXCEPTION START ---");
 			console.error("Error Object (Raw):", error);
 			if (error && typeof error === "object") {
 				console.error("Error Status:", error.status);
 				console.error("Error Data:", JSON.stringify(error.data));
 
-				if (error.status === "FETCH_ERROR") {
-					console.error(
-						"NETWORK ERROR DETECTED: This usually means CORS issues or the Backend is not running/reachable at the configured URL.",
-					);
-					toast.error("Network error: Unable to reach the server.");
+				if (error.status === 400 || error.status === 429) {
+					// 400 Bad Request, 429 Too Many Requests
+					// Handled below via error.data.errors or error.errors
 				} else if (error.status === 401) {
 					// Check for Allauth Headless "verify_email" flow
 					let data = error.data;
@@ -117,12 +119,12 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 						}
 					}
 
-					const flows = data?.data?.flows || data?.flows || []; // Handle nested data structure
+					const flows = data?.flows || [];
 					const verifyEmailFlow = Array.isArray(flows)
-						? flows.find((f: any) => f.id === "verify_email")
+						? flows.find((f: Flow) => f.id === "verify_email")
 						: null;
 
-					if (verifyEmailFlow && verifyEmailFlow.is_pending) {
+					if (verifyEmailFlow?.is_pending) {
 						toast.info(
 							"Verification email sent! Please check your inbox to continue.",
 						);
@@ -135,6 +137,11 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 					toast.error(
 						"Account already exists with this email. Please sign in or reset your password.",
 					);
+				} else if ((error as { status: unknown }).status === "FETCH_ERROR") {
+					console.error(
+						"NETWORK ERROR DETECTED: This usually means CORS issues or the Backend is not running/reachable at the configured URL.",
+					);
+					toast.error("Network error: Unable to reach the server.");
 				}
 			} else {
 				console.error("Error is not an object:", error);
@@ -144,17 +151,21 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 
 			if (error?.data?.errors) {
 				console.warn("Mapped Errors from API (Data):", error.data.errors);
-				error.data.errors.forEach((err: any) => {
+				error.data.errors.forEach((err: AuthError) => {
 					if (err.param) {
-						form.setError(err.param as any, { message: err.message });
+						form.setError(err.param as keyof AuthFormValues, {
+							message: err.message,
+						});
 					}
 				});
-			} else if (error.errors) {
+			} else if (error?.errors) {
 				// Handle case where errors might be directly on the error object
 				console.warn("Mapped Errors from API (Direct):", error.errors);
-				error.errors.forEach((err: any) => {
+				error.errors.forEach((err: AuthError) => {
 					if (err.param) {
-						form.setError(err.param as any, { message: err.message });
+						form.setError(err.param as keyof AuthFormValues, {
+							message: err.message,
+						});
 					}
 				});
 			}

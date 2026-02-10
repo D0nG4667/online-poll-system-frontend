@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-// import { logout, setCredentials } from "../store/features/auth/authSlice"; // Removed unused imports
+// import { logout, setCredentials } from "../store/features/auth/authSlice";
+// Removed unused imports
 import type { RootState } from "../store/store";
 
 // Only import types if needed, but we can't import AuthState if it's not exported from store.
@@ -11,21 +12,14 @@ import type { RootState } from "../store/store";
 // For this MVP, we will use generic paths that the user can map,
 // but formatted for the headless responses.
 
+import type {
+	AllauthResponse,
+	LoginRequest,
+	SignupRequest,
+} from "../types/auth";
+
 // Allauth Headless Response Structure
-interface AllauthResponse<T = any> {
-	status: number;
-	data?: T;
-	meta?: {
-		session_token?: string;
-		is_authenticated?: boolean;
-		[key: string]: any;
-	};
-	errors?: Array<{
-		code: string;
-		message: string;
-		param?: string;
-	}>;
-}
+// Imported from types/auth.ts
 
 export const authApi = createApi({
 	reducerPath: "authApi",
@@ -45,14 +39,14 @@ export const authApi = createApi({
 	}),
 
 	endpoints: (builder) => ({
-		login: builder.mutation<AllauthResponse, any>({
+		login: builder.mutation<AllauthResponse, LoginRequest>({
 			query: (credentials) => ({
 				url: "/auth/login",
 				method: "POST",
 				body: credentials,
 			}),
 		}),
-		signup: builder.mutation<AllauthResponse, any>({
+		signup: builder.mutation<AllauthResponse, SignupRequest>({
 			query: (userData) => ({
 				url: "/auth/signup",
 				method: "POST",

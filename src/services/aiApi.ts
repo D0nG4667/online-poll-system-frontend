@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getCSRFToken } from "../lib/csrf";
 import type { RootState } from "../store/store";
 import type {
 	AnalysisRequest,
@@ -14,6 +15,7 @@ export const aiApi = createApi({
 	reducerPath: "aiApi",
 	baseQuery: fetchBaseQuery({
 		baseUrl: "/api/v1/ai",
+		credentials: "include",
 		prepareHeaders: (headers, { getState }) => {
 			const { sessionToken, accessToken } = (getState() as RootState).auth;
 
@@ -21,6 +23,12 @@ export const aiApi = createApi({
 				headers.set("Authorization", `Bearer ${accessToken}`);
 			} else if (sessionToken) {
 				headers.set("X-Session-Token", sessionToken);
+			}
+
+			// Add CSRF token for Django
+			const csrfToken = getCSRFToken();
+			if (csrfToken) {
+				headers.set("X-CSRFToken", csrfToken);
 			}
 
 			headers.set("Accept", "application/json");

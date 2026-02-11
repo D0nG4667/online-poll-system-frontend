@@ -12,6 +12,7 @@ import {
 	type TopPollsResponse,
 	type TrendData,
 } from "@/graphql/analytics";
+import { getCSRFToken } from "@/lib/csrf";
 import type { RootState } from "@/store/store";
 
 // GraphQL base query
@@ -32,8 +33,12 @@ const graphqlBaseQuery =
 						: sessionToken
 							? { "X-Session-Token": sessionToken }
 							: {}),
+					"X-CSRFToken": getCSRFToken() || "",
 					Accept: "application/json",
 				},
+				// Ensure fetch includes credentials for CSRF cookies
+				fetch: (url, options) =>
+					fetch(url, { ...options, credentials: "include" }),
 			});
 
 			const data = await client.request(document, variables);

@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getCSRFToken } from "../lib/csrf";
 // import { logout, setCredentials } from "../store/features/auth/authSlice";
 // Removed unused imports
 import type { RootState } from "../store/store";
@@ -30,6 +31,7 @@ export const authApi = createApi({
 	baseQuery: fetchBaseQuery({
 		// Base URL points to the headless client root
 		baseUrl: "/allauth",
+		credentials: "include",
 		prepareHeaders: (headers, { getState }) => {
 			const { sessionToken, accessToken } = (getState() as RootState).auth;
 
@@ -39,6 +41,12 @@ export const authApi = createApi({
 			} else if (sessionToken) {
 				// Fallback to Session Token
 				headers.set("X-Session-Token", sessionToken);
+			}
+
+			// Add CSRF token for Django
+			const csrfToken = getCSRFToken();
+			if (csrfToken) {
+				headers.set("X-CSRFToken", csrfToken);
 			}
 
 			// Headless API prefers JSON

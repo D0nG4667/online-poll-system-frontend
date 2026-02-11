@@ -29,7 +29,11 @@ export async function proxyRequest(
 	// This is key for Django CSRF protection
 	requestHeaders.set("Origin", BACKEND_URL);
 	requestHeaders.set("Referer", BACKEND_URL);
-	// host is better left to fetch to handle correctly
+
+	// Delete headers that can cause issues when proxied
+	requestHeaders.delete("host");
+	requestHeaders.delete("connection");
+	requestHeaders.delete("content-length");
 
 	// Add CSRF token header if available
 	if (csrfToken) {
@@ -88,14 +92,30 @@ export async function proxyRequest(
 		}
 
 		// Build response headers, removing some that might cause issues when proxied back
-		const responseHeaders = new Headers(response.headers);
-		responseHeaders.delete("content-encoding"); // Let Next.js handle compression
+		const responseHeaders = new Headers();
+		response.headers.forEach((value, key) => {
+			if (key.toLowerCase() !== "content-encoding") {
+				// We'll handle cookies specially if needed, but for now let's copy everything else
+				responseHeaders.append(key, value);
+			}
+		});
 
-		return new NextResponse(response.body, {
+		const nextResponse = new NextResponse(response.body, {
 			status: response.status,
 			statusText: response.statusText,
 			headers: responseHeaders,
 		});
+
+		// Explicitly copy Set-Cookie headers to avoid merging issues
+		// NextResponse.headers.set merges them, which can break browser cookie parsing
+		const setCookies = response.headers.getSetCookie();
+		if (setCookies.length > 0) {
+			for (const cookie of setCookies) {
+				nextResponse.headers.append("Set-Cookie", cookie);
+			}
+		}
+
+		return nextResponse;
 	} catch (error: unknown) {
 		const err = error as {
 			code?: string;

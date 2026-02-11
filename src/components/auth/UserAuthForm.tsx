@@ -12,9 +12,14 @@ import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getCSRFToken } from "@/lib/csrf";
 import { signinSchema, signupSchema } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
-import { useSigninMutation, useSignupMutation } from "@/services/authApi";
+import {
+	authApi,
+	useSigninMutation,
+	useSignupMutation,
+} from "@/services/authApi";
 import { setCredentials } from "@/store/features/auth/authSlice";
 import { useAppDispatch } from "@/store/hooks";
 import type { AllauthResponse, AuthError, Flow } from "@/types/auth";
@@ -50,13 +55,35 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 		},
 	});
 
-	function handleGoogleLogin() {
+	async function handleGoogleLogin() {
 		setIsLoading(true);
 		try {
 			// As per allauth headless documentation/official client:
 			// "As calling this endpoint results in a user facing redirect (302),
 			// this call is only available in a browser, and must be called in a
 			// synchronous (non-XHR) manner."
+
+			// If CSRF token is missing (incognito mode/first visit), prime the session
+			let csrfToken = getCSRFToken();
+			if (!csrfToken) {
+				console.log("No CSRF token found. Priming session...");
+				// Trigger a session request to get the cookie from backend
+				// We don't unwrap here because a 401 is expected but it still sets the cookie
+				try {
+					await dispatch(authApi.endpoints.getSession.initiate()).unwrap();
+					// Small wait to ensure browser processes the Set-Cookie header
+					await new Promise((resolve) => setTimeout(resolve, 100));
+				} catch (_e) {
+					// 401 is expected for guest users, cookie should still be set
+					console.log("Session primed (ignore expected 401)");
+					await new Promise((resolve) => setTimeout(resolve, 100));
+				}
+				csrfToken = getCSRFToken();
+				console.log(
+					"CSRF Token after priming:",
+					csrfToken ? "Found" : "Missing",
+				);
+			}
 
 			// The callback URL must match exactly what is configured in Google Cloud Console
 			const callbackUrl = "http://localhost:3001/account/provider/callback/";
@@ -66,11 +93,6 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 			const form = document.createElement("form");
 			form.method = "POST";
 			form.action = action;
-
-			const csrfToken = document.cookie
-				.split("; ")
-				.find((row) => row.startsWith("csrftoken="))
-				?.split("=")[1];
 
 			const data: Record<string, string> = {
 				provider: "google",

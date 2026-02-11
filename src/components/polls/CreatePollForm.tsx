@@ -1,7 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import {
+	CalendarIcon,
+	Loader2,
+	Plus,
+	Save,
+	Settings,
+	Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -11,18 +18,28 @@ import {
 	useFieldArray,
 	useForm,
 } from "react-hook-form";
+
 import { toast } from "sonner";
 import * as z from "zod";
+import { AIPromptDialog } from "@/components/ai/AIPromptDialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
 	useCreateOptionMutation,
 	useCreatePollMutation,
 	useCreateQuestionMutation,
 } from "@/services/pollsApi";
+import type { AIGeneratedQuestion } from "@/types/ai";
 
 // Validation Schema
 const optionSchema = z.object({
@@ -40,7 +57,7 @@ const pollSchema = z.object({
 	description: z.string().optional(),
 	is_active: z.boolean().optional(),
 	is_open: z.boolean().optional(),
-	start_date: z.string().min(1, "Start date is required"), // Ideally use date picker
+	start_date: z.string().min(1, "Start date is required"),
 	end_date: z.string().optional(),
 	questions: z.array(questionSchema).min(1, "At least 1 question is required"),
 });
@@ -80,6 +97,26 @@ export function CreatePollForm() {
 		control: form.control,
 		name: "questions",
 	});
+
+	// Handle AI-generated poll data
+	const handleAIGenerated = (data: {
+		title: string;
+		description: string;
+		questions: AIGeneratedQuestion[];
+	}) => {
+		form.setValue("title", data.title, { shouldValidate: true });
+		form.setValue("description", data.description, { shouldValidate: true });
+		form.setValue(
+			"questions",
+			data.questions.map((q) => ({
+				text: q.text,
+				question_type: q.question_type,
+				options: q.options.map((o) => ({ text: o.text })),
+			})),
+			{ shouldValidate: true },
+		);
+		toast.success("Poll generated! Review and customize before saving.");
+	};
 
 	const handleSubmit = async (data: PollFormValues) => {
 		setIsSubmitting(true);
@@ -138,110 +175,168 @@ export function CreatePollForm() {
 	return (
 		<form
 			onSubmit={form.handleSubmit(handleSubmit)}
-			className="space-y-8 max-w-4xl mx-auto pb-20"
+			className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto pb-20"
 		>
-			<div className="space-y-4">
-				<div className="grid gap-2">
-					<Label htmlFor="title">Poll Title</Label>
-					<Input
-						id="title"
-						{...form.register("title")}
-						disabled={isSubmitting}
-					/>
-					{form.formState.errors.title && (
-						<p className="text-red-500 text-sm">
-							{form.formState.errors.title.message}
-						</p>
-					)}
-				</div>
+			<div className="lg:col-span-2 space-y-8">
+				{/* General Information Card */}
+				<Card>
+					<CardHeader>
+						<div className="flex items-center justify-between">
+							<div>
+								<CardTitle>Poll Details</CardTitle>
+								<CardDescription>
+									Basic information about your new poll.
+								</CardDescription>
+							</div>
+							<AIPromptDialog onPollGenerated={handleAIGenerated} />
+						</div>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="grid gap-2">
+							<Label htmlFor="title">Poll Title</Label>
+							<Input
+								id="title"
+								placeholder="e.g., Team Lunch Preferences"
+								{...form.register("title")}
+								disabled={isSubmitting}
+							/>
+							{form.formState.errors.title && (
+								<p className="text-red-500 text-sm">
+									{form.formState.errors.title.message}
+								</p>
+							)}
+						</div>
 
-				<div className="grid gap-2">
-					<Label htmlFor="description">Description</Label>
-					<Textarea
-						id="description"
-						{...form.register("description")}
-						disabled={isSubmitting}
-					/>
-				</div>
+						<div className="grid gap-2">
+							<Label htmlFor="description">Description</Label>
+							<Textarea
+								id="description"
+								placeholder="Provide some context for your participants..."
+								className="min-h-[100px]"
+								{...form.register("description")}
+								disabled={isSubmitting}
+							/>
+						</div>
+					</CardContent>
+				</Card>
 
-				<div className="grid grid-cols-2 gap-4">
-					<div className="grid gap-2">
-						<Label htmlFor="start_date">Start Date</Label>
-						<Input
-							type="date"
-							id="start_date"
-							{...form.register("start_date")}
-							disabled={isSubmitting}
-						/>
-						{form.formState.errors.start_date && (
-							<p className="text-red-500 text-sm">
-								{form.formState.errors.start_date.message}
+				{/* Questions Card */}
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<div>
+							<CardTitle>Questions</CardTitle>
+							<CardDescription>Define what you want to ask.</CardDescription>
+						</div>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={() =>
+								appendQuestion({
+									text: "",
+									question_type: "single",
+									options: [{ text: "" }, { text: "" }],
+								})
+							}
+						>
+							<Plus className="h-4 w-4 mr-2" /> Add Question
+						</Button>
+					</CardHeader>
+					<CardContent className="space-y-6 pt-4">
+						{questionFields.map((field, index) => (
+							<QuestionField
+								key={field.id}
+								index={index}
+								control={form.control}
+								register={form.register}
+								remove={() => removeQuestion(index)}
+								errors={form.formState.errors.questions?.[index]}
+								isSubmitting={isSubmitting}
+							/>
+						))}
+						{form.formState.errors.questions && (
+							<p className="text-red-500 text-sm text-center">
+								{form.formState.errors.questions.message}
 							</p>
 						)}
-					</div>
-					<div className="grid gap-2">
-						<Label htmlFor="end_date">End Date (Optional)</Label>
-						<Input
-							type="date"
-							id="end_date"
-							{...form.register("end_date")}
-							disabled={isSubmitting}
-						/>
-					</div>
-				</div>
+					</CardContent>
+				</Card>
 			</div>
 
 			<div className="space-y-6">
-				<div className="flex items-center justify-between">
-					<h2 className="text-xl font-semibold">Questions</h2>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() =>
-							appendQuestion({
-								text: "",
-								question_type: "single",
-								options: [{ text: "" }, { text: "" }],
-							})
-						}
-					>
-						<Plus className="h-4 w-4 mr-2" /> Add Question
-					</Button>
-				</div>
+				{/* Settings / Actions Side Panel */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<Settings className="h-5 w-5" /> Settings
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-6">
+						<div className="grid gap-4">
+							<div className="grid gap-2">
+								<Label htmlFor="start_date">Start Date</Label>
+								<div className="relative">
+									<Input
+										type="date"
+										id="start_date"
+										{...form.register("start_date")}
+										disabled={isSubmitting}
+									/>
+									<CalendarIcon className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+								</div>
+								{form.formState.errors.start_date && (
+									<p className="text-red-500 text-sm">
+										{form.formState.errors.start_date.message}
+									</p>
+								)}
+							</div>
+							<div className="grid gap-2">
+								<Label htmlFor="end_date">End Date (Optional)</Label>
+								<div className="relative">
+									<Input
+										type="date"
+										id="end_date"
+										{...form.register("end_date")}
+										disabled={isSubmitting}
+									/>
+									<CalendarIcon className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+								</div>
+							</div>
+						</div>
 
-				{questionFields.map((field, index) => (
-					<QuestionField
-						key={field.id}
-						index={index}
-						control={form.control}
-						register={form.register}
-						remove={() => removeQuestion(index)}
-						errors={form.formState.errors.questions?.[index]}
-						isSubmitting={isSubmitting}
-					/>
-				))}
-				{form.formState.errors.questions && (
-					<p className="text-red-500 text-sm text-center">
-						{form.formState.errors.questions.message}
-					</p>
-				)}
+						<div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+							<div className="space-y-0.5">
+								<Label>Active Poll</Label>
+								<p className="text-xs text-muted-foreground">
+									Visible to users immediately
+								</p>
+							</div>
+							<Switch
+								checked={form.watch("is_active")}
+								onCheckedChange={(checked) =>
+									form.setValue("is_active", checked)
+								}
+								disabled={isSubmitting}
+							/>
+						</div>
+
+						<Button
+							type="submit"
+							variant="unicorn"
+							size="lg"
+							className="w-full"
+							disabled={isSubmitting}
+						>
+							{isSubmitting ? (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							) : (
+								<Save className="mr-2 h-4 w-4" />
+							)}
+							Create Poll
+						</Button>
+					</CardContent>
+				</Card>
 			</div>
-
-			<Button
-				type="submit"
-				variant="unicorn"
-				size="lg"
-				className="w-full"
-				disabled={isSubmitting}
-			>
-				{isSubmitting ? (
-					<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-				) : (
-					<Save className="mr-2 h-4 w-4" />
-				)}
-				Create Poll
-			</Button>
 		</form>
 	);
 }
@@ -251,11 +346,10 @@ interface QuestionFieldProps {
 	control: Control<PollFormValues>;
 	register: UseFormRegister<PollFormValues>;
 	remove: () => void;
-	errors?: any;
+	errors?: any; // Simplified to bypass complex nesting issues
 	isSubmitting: boolean;
 }
 
-// Sub-component for individual question fields (to keep main component cleaner)
 function QuestionField({
 	index,
 	control,
@@ -274,25 +368,32 @@ function QuestionField({
 	});
 
 	return (
-		<Card className="relative border-l-4 border-l-primary/50">
-			<Button
-				type="button"
-				variant="ghost"
-				size="icon"
-				className="absolute top-2 right-2 text-muted-foreground hover:text-red-500"
-				onClick={remove}
-			>
-				<Trash2 className="h-4 w-4" />
-			</Button>
-			<CardHeader className="pb-2">
-				<CardTitle className="text-base">Question {index + 1}</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-4">
+		<div className="relative rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+			<div className="absolute top-4 right-4 z-10">
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					className="h-8 w-8 text-muted-foreground hover:text-red-500"
+					onClick={remove}
+				>
+					<Trash2 className="h-4 w-4" />
+				</Button>
+			</div>
+
+			<div className="space-y-4">
+				<div className="flex items-center gap-2 mb-2">
+					<span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+						{index + 1}
+					</span>
+					<h4 className="text-sm font-medium">Question</h4>
+				</div>
+
 				<div className="grid gap-2">
-					<Label>Question Text</Label>
 					<Input
 						{...register(`questions.${index}.text`)}
-						placeholder="What do you want to ask?"
+						placeholder="What would you like to ask?"
+						className="font-medium"
 						disabled={isSubmitting}
 					/>
 					{errors?.text && (
@@ -301,11 +402,10 @@ function QuestionField({
 				</div>
 
 				<div className="grid gap-2">
-					<Label>Type</Label>
-					{/* Select component usage with react-hook-form Controller would be better, but native select for speed/MVP */}
+					<Label className="text-xs text-muted-foreground">Type</Label>
 					<select
 						{...register(`questions.${index}.question_type`)}
-						className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+						className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 						disabled={isSubmitting}
 					>
 						<option value="single">Single Choice</option>
@@ -313,14 +413,15 @@ function QuestionField({
 					</select>
 				</div>
 
-				<div className="space-y-2 pl-4 border-l-2">
-					<Label>Options</Label>
+				<div className="space-y-3 pt-2">
+					<Label className="text-xs text-muted-foreground">Options</Label>
 					{optionFields.map((opt, optIndex) => (
 						<div key={opt.id} className="flex items-center gap-2">
+							<div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
 							<Input
 								{...register(`questions.${index}.options.${optIndex}.text`)}
 								placeholder={`Option ${optIndex + 1}`}
-								className="h-9"
+								className="h-8 text-sm"
 								disabled={isSubmitting}
 							/>
 							{optionFields.length > 2 && (
@@ -345,13 +446,13 @@ function QuestionField({
 						type="button"
 						variant="ghost"
 						size="sm"
-						className="text-xs"
+						className="text-xs h-8"
 						onClick={() => appendOption({ text: "" })}
 					>
 						<Plus className="h-3 w-3 mr-1" /> Add Option
 					</Button>
 				</div>
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 }

@@ -11,12 +11,16 @@ import type {
 export const pollsApi = createApi({
 	reducerPath: "pollsApi",
 	baseQuery: fetchBaseQuery({
-		baseUrl: `${process.env.NEXT_PUBLIC_API_URL || ""}/api/v1`,
+		baseUrl: "/api/v1",
 		prepareHeaders: (headers, { getState }) => {
-			const token = (getState() as RootState).auth.token;
-			if (token) {
-				headers.set("X-Session-Token", token);
+			const { sessionToken, accessToken } = (getState() as RootState).auth;
+
+			if (accessToken) {
+				headers.set("Authorization", `Bearer ${accessToken}`);
+			} else if (sessionToken) {
+				headers.set("X-Session-Token", sessionToken);
 			}
+
 			headers.set("Accept", "application/json");
 			return headers;
 		},

@@ -1,8 +1,8 @@
-# Contributing to Project Nexus
+# Contributing to Plaude Poll
 
 ## 🌳 GitFlow Branching Strategy
 
-Project Nexus follows a strict **GitFlow** workflow to ensure stability and parallel development.
+Plaude Poll follows a strict **GitFlow** workflow to ensure stability and parallel development.
 
 ### Main Branches
 - **`main`**: Production-ready code. Do not commit directly. Deploys to Production.

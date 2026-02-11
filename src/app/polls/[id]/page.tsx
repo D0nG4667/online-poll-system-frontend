@@ -1,9 +1,11 @@
 "use client";
 
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, BarChart2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
+import { AIInsightsPanel } from "@/components/ai/AIInsightsPanel";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { PollResults } from "@/components/polls/PollResults";
 import { QuestionCard } from "@/components/polls/QuestionCard";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/mode-toggle";
@@ -23,6 +25,9 @@ export default function PollDetailPage({
 	// Simple state for single-question polls (MVP)
 	// For multi-question, we'd need a map of questionId -> optionId
 	const [selectedOption, setSelectedOption] = useState<number | null>(null);
+	const [viewMode, setViewMode] = useState<"vote" | "results" | "insights">(
+		"vote",
+	);
 
 	return (
 		<AuthGuard>
@@ -75,34 +80,72 @@ export default function PollDetailPage({
 							</p>
 						</div>
 
-						<div className="space-y-6">
-							{poll.questions.map((question) => (
-								<QuestionCard
-									key={question.id}
-									question={question}
-									selectedOption={selectedOption}
-									onSelectOption={setSelectedOption}
-									disabled={isVoting || !poll.is_active || !poll.is_open}
-								/>
-							))}
-						</div>
-
-						<div className="flex justify-end pt-4">
+						<div className="flex justify-between items-center bg-muted/30 p-1 rounded-lg w-fit mb-6">
 							<Button
-								size="lg"
-								variant="unicorn"
-								disabled={
-									!selectedOption ||
-									isVoting ||
-									!poll.is_active ||
-									!poll.is_open
-								}
-								onClick={() => selectedOption && handleVote(selectedOption)}
+								variant={viewMode === "vote" ? "secondary" : "ghost"}
+								size="sm"
+								onClick={() => setViewMode("vote")}
+								className="text-sm"
 							>
-								{isVoting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-								Submit Vote
+								Vote
+							</Button>
+							<Button
+								variant={viewMode === "results" ? "secondary" : "ghost"}
+								size="sm"
+								onClick={() => setViewMode("results")}
+								className="text-sm"
+							>
+								<BarChart2 className="h-4 w-4 mr-1" />
+								Results
+							</Button>
+							<Button
+								variant={viewMode === "insights" ? "secondary" : "ghost"}
+								size="sm"
+								onClick={() => setViewMode("insights")}
+								className="text-sm"
+							>
+								✨ AI Insights
 							</Button>
 						</div>
+
+						{viewMode === "vote" ? (
+							<>
+								<div className="space-y-6">
+									{poll.questions.map((question) => (
+										<QuestionCard
+											key={question.id}
+											question={question}
+											selectedOption={selectedOption}
+											onSelectOption={setSelectedOption}
+											disabled={isVoting || !poll.is_active || !poll.is_open}
+										/>
+									))}
+								</div>
+
+								<div className="flex justify-end pt-4">
+									<Button
+										size="lg"
+										variant="unicorn"
+										disabled={
+											!selectedOption ||
+											isVoting ||
+											!poll.is_active ||
+											!poll.is_open
+										}
+										onClick={() => selectedOption && handleVote(selectedOption)}
+									>
+										{isVoting && (
+											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										)}
+										Submit Vote
+									</Button>
+								</div>
+							</>
+						) : viewMode === "results" ? (
+							<PollResults poll={poll} />
+						) : (
+							<AIInsightsPanel pollId={pollId} />
+						)}
 					</div>
 				)}
 			</div>

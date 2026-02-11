@@ -6,16 +6,19 @@ import { useEffect } from "react";
 import { useAppSelector } from "@/store/hooks";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-	const { isAuthenticated, token } = useAppSelector((state) => state.auth);
+	const { isAuthenticated, sessionToken, accessToken } = useAppSelector(
+		(state) => state.auth,
+	);
+	const hasToken = !!(sessionToken || accessToken);
 	const router = useRouter();
 
 	useEffect(() => {
-		if (!isAuthenticated || !token) {
-			router.push("/login");
+		if (!isAuthenticated || !hasToken) {
+			router.push("/signin");
 		}
-	}, [isAuthenticated, token, router]);
+	}, [isAuthenticated, hasToken, router]);
 
-	if (!isAuthenticated || !token) {
+	if (!isAuthenticated || !hasToken) {
 		return (
 			<div className="flex h-screen w-full items-center justify-center">
 				<Loader2 className="h-8 w-8 animate-spin text-primary" />

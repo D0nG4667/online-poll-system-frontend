@@ -6,7 +6,10 @@ export async function GET(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	return proxyRequest(request, ["api", "v1", ...path]);
+	console.log(`[Allauth Route] GET /allauth/${path.join("/")}`);
+	return proxyRequest(request, ["_allauth", ...path], {
+		addTrailingSlash: false,
+	});
 }
 
 export async function POST(
@@ -14,7 +17,10 @@ export async function POST(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	return proxyRequest(request, ["api", "v1", ...path]);
+	console.log(`[Allauth Route] POST /allauth/${path.join("/")}`);
+	return proxyRequest(request, ["_allauth", ...path], {
+		addTrailingSlash: false,
+	});
 }
 
 export async function PUT(
@@ -22,7 +28,9 @@ export async function PUT(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	return proxyRequest(request, ["api", "v1", ...path]);
+	return proxyRequest(request, ["_allauth", ...path], {
+		addTrailingSlash: false,
+	});
 }
 
 export async function DELETE(
@@ -30,7 +38,9 @@ export async function DELETE(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	return proxyRequest(request, ["api", "v1", ...path]);
+	return proxyRequest(request, ["_allauth", ...path], {
+		addTrailingSlash: false,
+	});
 }
 
 export async function PATCH(
@@ -38,5 +48,7 @@ export async function PATCH(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	return proxyRequest(request, ["api", "v1", ...path]);
+	return proxyRequest(request, ["_allauth", ...path], {
+		addTrailingSlash: false,
+	});
 }

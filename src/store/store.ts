@@ -8,7 +8,9 @@ import {
 	REGISTER,
 	REHYDRATE,
 } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import storage from "@/lib/storage";
+import { aiApi } from "../services/aiApi";
+import { analyticsApi } from "../services/analyticsApi";
 import { authApi } from "../services/authApi";
 import { pollsApi } from "../services/pollsApi";
 import authReducer from "./features/auth/authSlice";
@@ -17,6 +19,8 @@ const rootReducer = combineReducers({
 	auth: authReducer,
 	[authApi.reducerPath]: authApi.reducer,
 	[pollsApi.reducerPath]: pollsApi.reducer,
+	[aiApi.reducerPath]: aiApi.reducer,
+	[analyticsApi.reducerPath]: analyticsApi.reducer,
 });
 
 const persistConfig = {
@@ -37,7 +41,9 @@ export const makeStore = () => {
 				},
 			})
 				.concat(authApi.middleware)
-				.concat(pollsApi.middleware),
+				.concat(pollsApi.middleware)
+				.concat(aiApi.middleware)
+				.concat(analyticsApi.middleware),
 	});
 };
 

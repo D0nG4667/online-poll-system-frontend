@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-export const loginSchema = z.object({
+export const signinSchema = z.object({
 	email: z.string().email({ message: "Invalid email address" }),
 	password: z
 		.string()
 		.min(6, { message: "Password must be at least 6 characters" }),
 });
 
-export const registerSchema = z
+export const signupSchema = z
 	.object({
 		name: z.string().min(2, { message: "Name must be at least 2 characters" }),
 		email: z.string().email({ message: "Invalid email address" }),
@@ -21,5 +21,5 @@ export const registerSchema = z
 		path: ["confirmPassword"],
 	});
 
-export type LoginFormValues = z.infer<typeof loginSchema>;
-export type RegisterFormValues = z.infer<typeof registerSchema>;
+export type SigninFormValues = z.infer<typeof signinSchema>;
+export type SignupFormValues = z.infer<typeof signupSchema>;

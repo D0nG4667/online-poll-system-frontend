@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/auth/AuthGuard";
 import { CreatePollForm } from "@/components/polls/CreatePollForm";
 import { Button } from "@/components/ui/button";
-import { ModeToggle } from "@/components/ui/mode-toggle";
 
 export default function CreatePollPage() {
 	const router = useRouter();
 
 	return (
 		<AuthGuard>
-			<div className="container mx-auto py-10 space-y-8">
+			<div className="container mx-auto py-0 space-y-8">
 				<div className="flex items-center justify-between">
 					<div className="space-y-1">
 						<Button
@@ -30,7 +29,6 @@ export default function CreatePollPage() {
 							Design a poll, add your questions, and share it with the world.
 						</p>
 					</div>
-					<ModeToggle />
 				</div>
 
 				<CreatePollForm />

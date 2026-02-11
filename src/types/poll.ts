@@ -3,9 +3,7 @@ export interface Option {
 	question: number;
 	text: string;
 	order: number;
-	// vote_count is not in schema but often needed for UI.
-	// If backend doesn't send it, we might need to calculate it from a separate 'results' endpoint or if the serializer includes it.
-	// For now, sticking to strict schema, will add if backend provides it.
+	vote_count?: number;
 }
 
 export type QuestionType = "single" | "multiple" | "text";

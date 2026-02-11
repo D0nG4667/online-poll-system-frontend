@@ -17,9 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Project Nexus | Online Polling System",
+	title: "Plaude Poll | Create a poll in seconds",
 	description:
-		"A Next.js 16 based online polling system with real-time updates and AI insights.",
+		"The simplest way to create and share polls. Get instant results and analytics with Plaude Poll.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>

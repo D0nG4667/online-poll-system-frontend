@@ -59,10 +59,10 @@ export function Footer() {
 							</li>
 							<li>
 								<Link
-									href="/api/schema/swagger-ui/"
+									href="/signin"
 									className="hover:text-primary transition-colors"
 								>
-									Poll API
+									Poll AI
 								</Link>
 							</li>
 						</ul>

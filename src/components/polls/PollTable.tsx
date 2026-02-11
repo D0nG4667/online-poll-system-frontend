@@ -1,9 +1,22 @@
 "use client";
 
-import { Eye, MoreHorizontal, Pen, Trash } from "lucide-react";
+import { Eye, MoreHorizontal, Pen, Share2, Trash } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -20,13 +33,31 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useDeletePollMutation } from "@/services/pollsApi";
 import type { Poll } from "@/types/poll";
+import { PollDistribution } from "./PollDistribution";
 
 interface PollTableProps {
 	polls: Poll[];
 }
 
 export function PollTable({ polls }: PollTableProps) {
+	const [sharingPoll, setSharingPoll] = useState<Poll | null>(null);
+	const [deletingPoll, setDeletingPoll] = useState<Poll | null>(null);
+	const [deletePoll, { isLoading: isDeleting }] = useDeletePollMutation();
+
+	const handleDelete = async () => {
+		if (!deletingPoll) return;
+		try {
+			await deletePoll(deletingPoll.id).unwrap();
+			toast.success("Poll deleted successfully");
+			setDeletingPoll(null);
+		} catch (err) {
+			toast.error("Failed to delete poll");
+			console.error("Delete error:", err);
+		}
+	};
+
 	return (
 		<div className="rounded-2xl border overflow-hidden bg-white/50 dark:bg-muted/5 shadow-sm">
 			<Table>
@@ -119,15 +150,23 @@ export function PollTable({ polls }: PollTableProps) {
 												<Eye className="mr-2 h-4 w-4" /> View Poll
 											</Link>
 										</DropdownMenuItem>
-										<DropdownMenuItem disabled className="rounded-lg">
-											<Pen className="mr-2 h-4 w-4" /> Edit (Coming Soon)
+										<DropdownMenuItem
+											onClick={() => setSharingPoll(poll)}
+											className="rounded-lg"
+										>
+											<Share2 className="mr-2 h-4 w-4" /> Share Poll
+										</DropdownMenuItem>
+										<DropdownMenuItem asChild className="rounded-lg">
+											<Link href={`/dashboard/polls/${poll.id}/edit`}>
+												<Pen className="mr-2 h-4 w-4" /> Edit Poll
+											</Link>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
 										<DropdownMenuItem
-											className="text-red-600 rounded-lg"
-											disabled
+											className="text-red-600 rounded-lg focus:bg-red-50 focus:text-red-600"
+											onClick={() => setDeletingPoll(poll)}
 										>
-											<Trash className="mr-2 h-4 w-4" /> Delete (Coming Soon)
+											<Trash className="mr-2 h-4 w-4" /> Delete Poll
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
@@ -136,6 +175,53 @@ export function PollTable({ polls }: PollTableProps) {
 					))}
 				</TableBody>
 			</Table>
+
+			<Dialog
+				open={!!sharingPoll}
+				onOpenChange={(open) => !open && setSharingPoll(null)}
+			>
+				<DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent">
+					{sharingPoll && (
+						<PollDistribution
+							pollId={sharingPoll.id}
+							title={sharingPoll.title}
+						/>
+					)}
+				</DialogContent>
+			</Dialog>
+
+			<AlertDialog
+				open={!!deletingPoll}
+				onOpenChange={(open) => !open && setDeletingPoll(null)}
+			>
+				<AlertDialogContent className="rounded-2xl border-muted/20 shadow-2xl">
+					<AlertDialogHeader>
+						<AlertDialogTitle className="text-xl font-bold">
+							Are you absolutely sure?
+						</AlertDialogTitle>
+						<AlertDialogDescription className="text-muted-foreground">
+							This action cannot be undone. This will permanently delete the
+							poll{" "}
+							<span className="font-bold text-foreground">
+								"{deletingPoll?.title}"
+							</span>{" "}
+							and all associated data including votes.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter className="gap-2">
+						<AlertDialogCancel className="rounded-xl border-muted/20 hover:bg-muted/50 transition-colors">
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDelete}
+							className="bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all"
+							disabled={isDeleting}
+						>
+							{isDeleting ? "Deleting..." : "Delete Poll"}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

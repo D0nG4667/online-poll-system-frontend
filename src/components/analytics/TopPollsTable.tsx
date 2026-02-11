@@ -1,8 +1,10 @@
 "use client";
 
-import { AlertCircle, ArrowUpRight } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Share2 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
@@ -13,6 +15,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { useGetTopPollsQuery } from "@/services/analyticsApi";
+import { PollDistribution } from "../polls/PollDistribution";
 
 interface TopPollsTableProps {
 	timePeriod: "7d" | "30d" | "90d" | "1y";
@@ -20,6 +23,10 @@ interface TopPollsTableProps {
 
 export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 	const { data, isLoading, isError } = useGetTopPollsQuery(timePeriod);
+	const [sharingPollId, setSharingPollId] = useState<number | string | null>(
+		null,
+	);
+	const [sharingPollTitle, setSharingPollTitle] = useState<string>("");
 
 	if (isLoading) {
 		return (
@@ -76,14 +83,26 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 											{poll.status}
 										</Badge>
 									</TableCell>
-									<TableCell>
+									<TableCell className="flex gap-2">
 										{!useMockData && (
-											<Link
-												href={`/polls/${poll.id}`}
-												className="inline-flex items-center text-primary hover:underline"
-											>
-												<ArrowUpRight className="h-4 w-4" />
-											</Link>
+											<>
+												<Link
+													href={`/polls/${poll.id}`}
+													className="inline-flex items-center text-primary hover:underline"
+												>
+													<ArrowUpRight className="h-4 w-4" />
+												</Link>
+												<button
+													type="button"
+													onClick={() => {
+														setSharingPollId(poll.id);
+														setSharingPollTitle(poll.title);
+													}}
+													className="text-muted-foreground hover:text-primary transition-colors"
+												>
+													<Share2 className="h-4 w-4" />
+												</button>
+											</>
 										)}
 									</TableCell>
 								</TableRow>
@@ -101,6 +120,17 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 					</TableBody>
 				</Table>
 			</div>
+
+			<Dialog
+				open={!!sharingPollId}
+				onOpenChange={(open) => !open && setSharingPollId(null)}
+			>
+				<DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent">
+					{sharingPollId && (
+						<PollDistribution pollId={sharingPollId} title={sharingPollTitle} />
+					)}
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

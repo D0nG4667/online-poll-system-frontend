@@ -1,13 +1,15 @@
 "use client";
 
-import { ArrowLeft, BarChart2, Loader2 } from "lucide-react";
+import { ArrowLeft, BarChart2, Loader2, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { AIInsightsPanel } from "@/components/ai/AIInsightsPanel";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { PollDistribution } from "@/components/polls/PollDistribution";
 import { PollResults } from "@/components/polls/PollResults";
 import { QuestionCard } from "@/components/polls/QuestionCard";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePoll } from "@/hooks/usePoll";
@@ -28,6 +30,7 @@ export default function PollDetailPage({
 	const [viewMode, setViewMode] = useState<"vote" | "results" | "insights">(
 		"vote",
 	);
+	const [isShareOpen, setIsShareOpen] = useState(false);
 
 	return (
 		<AuthGuard>
@@ -41,8 +44,31 @@ export default function PollDetailPage({
 						<ArrowLeft className="h-4 w-4" />
 						Back to Dashboard
 					</Button>
-					<ModeToggle />
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setIsShareOpen(true)}
+							className="rounded-xl border-dashed"
+						>
+							<Share2 className="h-4 w-4 mr-2 text-primary" />
+							Share Poll
+						</Button>
+						<ModeToggle />
+					</div>
 				</div>
+
+				<Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+					<DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent">
+						{poll && (
+							<PollDistribution
+								pollId={poll.id}
+								initialTitle={poll.title}
+								initialDescription={poll.description}
+							/>
+						)}
+					</DialogContent>
+				</Dialog>
 
 				{isLoading && (
 					<div className="space-y-6">

@@ -204,7 +204,6 @@ export default function MyPollsPage() {
 					</div>
 				</div>
 			</footer>
-			;
 		</div>
 	);
 }

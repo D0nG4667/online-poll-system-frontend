@@ -12,6 +12,10 @@ import {
 	type TopPollsResponse,
 	type TrendData,
 } from "@/graphql/analytics";
+import {
+	GET_POLL_DISTRIBUTION_DATA,
+	type PollDistributionData,
+} from "@/graphql/distribution";
 import { getCSRFToken } from "@/lib/csrf";
 import type { RootState } from "@/store/store";
 
@@ -68,12 +72,8 @@ export const analyticsApi = createApi({
 			}),
 			transformResponse: (response: AnalyticsStatsResponse) =>
 				response.analyticsStats,
-			providesTags: (result, error) =>
-				result
-					? ["Analytics"]
-					: error?.status === 401
-						? ["UNAUTHORIZED"]
-						: ["UNKNOWN_ERROR"],
+			providesTags: (_result, error) =>
+				error?.status === 401 ? ["UNAUTHORIZED"] : ["Analytics"],
 		}),
 
 		// Get trend data for charts
@@ -84,12 +84,8 @@ export const analyticsApi = createApi({
 			}),
 			transformResponse: (response: AnalyticsTrendsResponse) =>
 				response.analyticsTrends,
-			providesTags: (result, error) =>
-				result
-					? ["Analytics"]
-					: error?.status === 401
-						? ["UNAUTHORIZED"]
-						: ["UNKNOWN_ERROR"],
+			providesTags: (_result, error) =>
+				error?.status === 401 ? ["UNAUTHORIZED"] : ["Analytics"],
 		}),
 
 		// Get top performing polls
@@ -99,12 +95,21 @@ export const analyticsApi = createApi({
 				variables: { period, limit: 10 },
 			}),
 			transformResponse: (response: TopPollsResponse) => response.topPolls,
-			providesTags: (result, error) =>
-				result
-					? ["Analytics"]
-					: error?.status === 401
-						? ["UNAUTHORIZED"]
-						: ["UNKNOWN_ERROR"],
+			providesTags: (_result, error) =>
+				error?.status === 401 ? ["UNAUTHORIZED"] : ["Analytics"],
+		}),
+
+		// Get poll data for distribution
+		getPollDistributionData: builder.query<
+			PollDistributionData["poll"],
+			string | number
+		>({
+			query: (id) => ({
+				document: GET_POLL_DISTRIBUTION_DATA,
+				variables: { id: id.toString() },
+			}),
+			transformResponse: (response: PollDistributionData) => response.poll,
+			providesTags: (_result, _error, id) => [{ type: "Poll" as const, id }],
 		}),
 	}),
 });
@@ -113,4 +118,5 @@ export const {
 	useGetAnalyticsStatsQuery,
 	useGetAnalyticsTrendsQuery,
 	useGetTopPollsQuery,
+	useGetPollDistributionDataQuery,
 } = analyticsApi;

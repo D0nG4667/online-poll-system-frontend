@@ -41,7 +41,7 @@ export const pollsApi = createApi({
 		}),
 		getPollById: builder.query<Poll, number>({
 			query: (id) => `/polls/${id}/`,
-			providesTags: (result, error, id) => [{ type: "Poll", id }],
+			providesTags: (_result, _error, id) => [{ type: "Poll", id }],
 		}),
 		castVote: builder.mutation<Vote, CreateVoteRequest>({
 			query: (voteData) => ({
@@ -73,6 +73,27 @@ export const pollsApi = createApi({
 				body: optionData,
 			}),
 		}),
+		deletePoll: builder.mutation<void, number | string>({
+			query: (id) => ({
+				url: `/polls/${id}/`,
+				method: "DELETE",
+			}),
+			invalidatesTags: ["Poll"],
+		}),
+		updatePoll: builder.mutation<
+			Poll,
+			{ id: number | string; data: Partial<Poll> }
+		>({
+			query: ({ id, data }) => ({
+				url: `/polls/${id}/`,
+				method: "PATCH",
+				body: data,
+			}),
+			invalidatesTags: (_result, _error, { id }) => [
+				{ type: "Poll", id },
+				"Poll",
+			],
+		}),
 	}),
 });
 
@@ -83,4 +104,6 @@ export const {
 	useCreatePollMutation,
 	useCreateQuestionMutation,
 	useCreateOptionMutation,
+	useDeletePollMutation,
+	useUpdatePollMutation,
 } = pollsApi;

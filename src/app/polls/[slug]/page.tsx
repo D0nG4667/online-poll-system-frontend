@@ -17,12 +17,11 @@ import { usePoll } from "@/hooks/usePoll";
 export default function PollDetailPage({
 	params,
 }: {
-	params: Promise<{ id: string }>;
+	params: Promise<{ slug: string }>;
 }) {
-	const { id } = use(params);
+	const { slug } = use(params);
 	const router = useRouter();
-	const pollId = parseInt(id);
-	const { poll, isLoading, error, handleVote, isVoting } = usePoll(pollId);
+	const { poll, isLoading, error, handleVote, isVoting } = usePoll(slug);
 
 	// Simple state for single-question polls (MVP)
 	// For multi-question, we'd need a map of questionId -> optionId
@@ -63,6 +62,7 @@ export default function PollDetailPage({
 						{poll && (
 							<PollDistribution
 								pollId={poll.id}
+								pollSlug={poll.slug}
 								initialTitle={poll.title}
 								initialDescription={poll.description}
 							/>
@@ -170,7 +170,7 @@ export default function PollDetailPage({
 						) : viewMode === "results" ? (
 							<PollResults poll={poll} />
 						) : (
-							<AIInsightsPanel pollId={pollId} />
+							<AIInsightsPanel pollId={poll.id} />
 						)}
 					</div>
 				)}

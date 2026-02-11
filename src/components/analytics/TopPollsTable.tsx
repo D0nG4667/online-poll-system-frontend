@@ -26,6 +26,7 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 	const [sharingPollId, setSharingPollId] = useState<number | string | null>(
 		null,
 	);
+	const [sharingPollSlug, setSharingPollSlug] = useState<string>("");
 	const [sharingPollTitle, setSharingPollTitle] = useState<string>("");
 
 	if (isLoading) {
@@ -87,7 +88,7 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 										{!useMockData && (
 											<>
 												<Link
-													href={`/polls/${poll.id}`}
+													href={`/polls/${poll.slug || poll.id}`}
 													className="inline-flex items-center text-primary hover:underline"
 												>
 													<ArrowUpRight className="h-4 w-4" />
@@ -96,6 +97,7 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 													type="button"
 													onClick={() => {
 														setSharingPollId(poll.id);
+														setSharingPollSlug(poll.slug || "");
 														setSharingPollTitle(poll.title);
 													}}
 													className="text-muted-foreground hover:text-primary transition-colors"
@@ -127,7 +129,11 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 			>
 				<DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent">
 					{sharingPollId && (
-						<PollDistribution pollId={sharingPollId} title={sharingPollTitle} />
+						<PollDistribution
+							pollId={sharingPollId}
+							pollSlug={sharingPollSlug}
+							title={sharingPollTitle}
+						/>
 					)}
 				</DialogContent>
 			</Dialog>
@@ -140,6 +146,7 @@ function getMockPolls() {
 		{
 			id: 1,
 			title: "Favorite Programming Language",
+			slug: "favorite-programming-language",
 			responses: 247,
 			views: 1043,
 			response_rate: 23.7,
@@ -149,6 +156,7 @@ function getMockPolls() {
 		{
 			id: 2,
 			title: "Team Lunch Preferences",
+			slug: "team-lunch-preferences",
 			responses: 89,
 			views: 156,
 			response_rate: 57.1,
@@ -158,6 +166,7 @@ function getMockPolls() {
 		{
 			id: 3,
 			title: "Office Hours Feedback",
+			slug: "office-hours-feedback",
 			responses: 45,
 			views: 98,
 			response_rate: 45.9,

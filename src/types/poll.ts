@@ -20,6 +20,7 @@ export interface Question {
 export interface Poll {
 	id: number;
 	title: string;
+	slug: string;
 	description: string;
 	created_by: string; // user id or username? Schema says string.
 	start_date: string; // ISO date string

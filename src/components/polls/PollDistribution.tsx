@@ -32,6 +32,7 @@ import { copyToClipboard, getEmbedCode, getPollUrl } from "@/lib/share-utils";
 
 interface PollDistributionProps {
 	pollId: string | number;
+	pollSlug?: string;
 	title: string;
 	initialTitle?: string;
 	initialDescription?: string;
@@ -39,6 +40,7 @@ interface PollDistributionProps {
 
 export function PollDistribution({
 	pollId,
+	pollSlug,
 	title: defaultTitle,
 	initialTitle,
 	initialDescription,
@@ -50,8 +52,8 @@ export function PollDistribution({
 		typeof window !== "undefined" ? window.location.origin : "",
 	);
 
-	const pollUrl = getPollUrl(pollId, origin);
-	const embedCode = getEmbedCode(pollId, origin);
+	const pollUrl = getPollUrl(pollSlug || pollId, origin);
+	const embedCode = getEmbedCode(pollSlug || pollId, origin);
 
 	const handleCopy = async (text: string, label: string) => {
 		const success = await copyToClipboard(text);

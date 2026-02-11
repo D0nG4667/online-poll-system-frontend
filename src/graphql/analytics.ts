@@ -36,6 +36,7 @@ export const GET_TOP_POLLS = gql`
 		topPolls(period: $period, limit: $limit) {
 			id
 			title
+			slug
 			responses
 			views
 			responseRate
@@ -70,6 +71,7 @@ export interface TrendData {
 export interface TopPoll {
 	id: number;
 	title: string;
+	slug: string;
 	responses: number;
 	views: number;
 	responseRate: number;

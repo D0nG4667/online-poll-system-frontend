@@ -1,10 +1,13 @@
 /**
  * Formats a poll URL for sharing
  */
-export const getPollUrl = (pollId: string | number, origin?: string) => {
+export const getPollUrl = (
+	pollIdentifier: string | number,
+	origin?: string,
+) => {
 	const base =
 		origin || (typeof window !== "undefined" ? window.location.origin : "");
-	return `${base}/polls/${pollId}`;
+	return `${base}/polls/${pollIdentifier}`;
 };
 
 /**

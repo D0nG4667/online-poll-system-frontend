@@ -39,9 +39,11 @@ export const pollsApi = createApi({
 			query: () => "/polls/",
 			providesTags: ["Poll"],
 		}),
-		getPollById: builder.query<Poll, number>({
-			query: (id) => `/polls/${id}/`,
-			providesTags: (_result, _error, id) => [{ type: "Poll", id }],
+		getPollById: builder.query<Poll, number | string>({
+			query: (idOrSlug) => `/polls/${idOrSlug}/`,
+			providesTags: (_result, _error, idOrSlug) => [
+				{ type: "Poll", id: idOrSlug },
+			],
 		}),
 		castVote: builder.mutation<Vote, CreateVoteRequest>({
 			query: (voteData) => ({

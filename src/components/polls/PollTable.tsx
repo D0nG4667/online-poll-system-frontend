@@ -78,7 +78,7 @@ export function PollTable({ polls }: PollTableProps) {
 							<TableCell className="font-medium py-4">
 								<div className="flex flex-col">
 									<Link
-										href={`/polls/${poll.id}`}
+										href={`/polls/${poll.slug || poll.id}`}
 										className="hover:underline font-semibold text-primary transition-colors hover:text-blue-600"
 									>
 										{poll.title}
@@ -146,7 +146,7 @@ export function PollTable({ polls }: PollTableProps) {
 									>
 										<DropdownMenuLabel>Actions</DropdownMenuLabel>
 										<DropdownMenuItem asChild className="rounded-lg">
-											<Link href={`/polls/${poll.id}`}>
+											<Link href={`/polls/${poll.slug || poll.id}`}>
 												<Eye className="mr-2 h-4 w-4" /> View Poll
 											</Link>
 										</DropdownMenuItem>
@@ -184,6 +184,7 @@ export function PollTable({ polls }: PollTableProps) {
 					{sharingPoll && (
 						<PollDistribution
 							pollId={sharingPoll.id}
+							pollSlug={sharingPoll.slug}
 							title={sharingPoll.title}
 						/>
 					)}

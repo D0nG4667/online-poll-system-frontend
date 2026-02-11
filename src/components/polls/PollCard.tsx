@@ -59,7 +59,7 @@ export function PollCard({ poll }: PollCardProps) {
 					variant={isActive ? "default" : "secondary"}
 					disabled={!isActive}
 				>
-					<Link href={`/polls/${poll.id}`}>
+					<Link href={`/polls/${poll.slug || poll.id}`}>
 						{isActive ? "Vote Now" : "View Results"}
 					</Link>
 				</Button>

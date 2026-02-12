@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import StoreProvider from "@/providers/StoreProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import "./globals.css";
+import "sonner/dist/styles.css";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -14,9 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Project Nexus | Online Polling System",
+	title: "Plaude Poll | Create a poll in seconds",
 	description:
-		"A Next.js 16 based online polling system with real-time updates and AI insights.",
+		"The simplest way to create and share polls. Get instant results and analytics with Plaude Poll.",
 };
 
 export default function RootLayout({
@@ -25,11 +28,19 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				<StoreProvider>{children}</StoreProvider>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
+					disableTransitionOnChange
+				>
+					<StoreProvider>{children}</StoreProvider>
+					<Toaster />
+				</ThemeProvider>
 			</body>
 		</html>
 	);

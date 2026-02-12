@@ -1,36 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Plaude Poll 📊
 
-## Getting Started
+![Plaude Poll Banner](public/logo.png)
 
-First, run the development server:
+> **The Intelligent, Modern Polling Platform.**
+> Create, Share, and Analyze polls with the power of AI.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/D0nG4667/online-poll-system-frontend)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14.0-black)](https://nextjs.org/)
+
+---
+
+## 📖 Overview
+
+**Plaude Poll** is a robust polling application re-imagined for the modern web. It combines a seamless user experience with powerful backend analytics and AI integrations. Whether you're gathering customer feedback, conducting market research, or making team decisions, Plaude Poll makes data collection effortless.
+
+## ✨ Key Features
+
+-   **📝 Smart Poll Creation**: Intuitive interface for building complex polls with varied question types.
+-   **🤖 AI-Powered Insights**: Chat with your data! Use our AI integration to generate summaries and ask questions about your poll results.
+-   **🚀 Easy Distribution**:
+    -   **SEO-Friendly Slugs**: Shareable, readable links (e.g., `/polls/team-lunch-preferences`).
+    -   **QR Codes**: Instant QR generation for physical sharing.
+    -   **Social Integration**: One-click sharing to major platforms.
+-   **📈 Real-time Analytics**:
+    -   Interactive dashboards.
+    -   Response rate tracking.
+    -   "Top Polls" leaderboard.
+-   **🔒 Secure & Robust**:
+    -   CSRF protection.
+    -   Role-based authentication (Creator vs. Voter).
+    -   Pagination support for large datasets.
+
+## 🛠️ Tech Stack
+
+### Frontend
+-   **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
+-   **Language**: [TypeScript](https://www.typescriptlang.org/)
+-   **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
+-   **State Management**: Redux Toolkit Query (RTK Query)
+-   **Icons**: Lucide React
+
+### Backend (Separate Repo)
+-   **Framework**: Django REST Framework
+-   **Database**: PostgreSQL
+-   **Authentication**: Django Allauth / JWT
+-   **AI Service**: Integration with LLM providers
+
+## 🚀 Getting Started
+
+### Prerequisites
+-   Node.js 18+
+-   pnpm (Package Manager)
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/D0nG4667/online-poll-system-frontend.git
+    cd online-poll-system-frontend
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    pnpm install
+    ```
+
+3.  **Environment Setup**
+    Create a `.env.local` file in the root directory:
+    ```env
+    BACKEND_URL=http://localhost:8000
+    NEXT_PUBLIC_SITE_URL=http://localhost:3000
+    ```
+
+4.  **Run the development server**
+    ```bash
+    pnpm dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) with your browser.
+
+## 📂 Project Structure
+
+```
+src/
+├── app/                 # Next.js App Router pages
+│   ├── dashboard/       # Protected Creator Dashboard
+│   ├── polls/           # Public Poll Voting Pages
+│   └── layout.tsx       # Root Layout
+├── components/          # Reusable UI Components
+│   ├── ai/              # AI-specific components (Insights, Prompts)
+│   ├── analytics/       # Charts and Data Tables
+│   ├── polls/           # Poll Management & Display
+│   └── ui/              # Base UI primitives (Buttons, Cards, etc.)
+├── services/            # API Service Definitions (RTK Query)
+├── lib/                 # Utilities (CSRF, formatting, validation)
+└── types/               # TypeScript Interfaces
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🤝 Contributing
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Git Flow**:
+-   `main`: Production-ready code.
+-   `develop`: Integration branch.
+-   `feature/*`: New features.
 
-## Learn More
+## 📄 License
 
-To learn more about Next.js, take a look at the following resources:
+This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License - see the [LICENSE](LICENSE) file for details.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+You are free to:
+- **Share** — copy and redistribute the material in any medium or format
+- **Adapt** — remix, transform, and build upon the material
 
-## Deploy on Vercel
+Under the following terms:
+- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+- **NonCommercial** — You may not use the material for commercial purposes.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+For more details, see the [LICENSE](LICENSE) file.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### **📩 Commercial Inquiries**
+
+For commercial licensing, custom implementations, or collaboration opportunities, please contact the author.
+
+<br>
+<hr>
+<p align="center">
+  <b>Made with ❤️ by <a href="https://linkedin.com/in/dr-gabriel-okundaye" target="_blank">Gabriel Okundaye, Plaude Poll Team</a></b>
+  <br>
+  🌐 <a href="https://gabcares.xyz" target="_blank">gabcares.xyz</a> &nbsp;|&nbsp; 🐙 <a href="https://github.com/D0nG4667" target="_blank">GitHub</a>
+</p>

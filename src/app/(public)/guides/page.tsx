@@ -83,7 +83,13 @@ export default function GuidesPage() {
 	);
 }
 
-function GuideCard({ title, description, tag }: any) {
+interface GuideCardProps {
+	title: string;
+	description: string;
+	tag: string;
+}
+
+function GuideCard({ title, description, tag }: GuideCardProps) {
 	return (
 		<div className="group bg-card/40 backdrop-blur-sm border border-border rounded-3xl p-8 hover:border-orange-500/30 transition-all hover:shadow-2xl hover:shadow-orange-500/5 cursor-pointer">
 			<div className="inline-flex px-2 py-0.5 rounded-md bg-secondary text-[10px] font-bold uppercase tracking-wider mb-6 group-hover:bg-orange-500/10 group-hover:text-orange-600 transition-colors">

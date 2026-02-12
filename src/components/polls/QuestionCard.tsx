@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 // import { Checkbox } from "@/components/ui/checkbox"; // For future multiple choice support
 import { cn } from "@/lib/utils";
-import type { Option, Question } from "@/types/poll";
+import type { Question } from "@/types/poll";
 
 interface QuestionCardProps {
 	question: Question;
@@ -29,7 +29,7 @@ export function QuestionCard({
 						<RadioGroup
 							disabled={disabled}
 							value={selectedOption?.toString()}
-							onValueChange={(val: string) => onSelectOption(parseInt(val))}
+							onValueChange={(val: string) => onSelectOption(parseInt(val, 10))}
 						>
 							{question.options.map((option) => (
 								<div

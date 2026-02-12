@@ -10,14 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useGetPollByIdQuery } from "@/services/pollsApi";
 
 interface EditPollPageProps {
-	params: Promise<{ id: string }>;
+	params: Promise<{ slug: string }>;
 }
 
 export default function EditPollPage({ params }: EditPollPageProps) {
-	const { id } = use(params);
+	const { slug } = use(params);
 	const router = useRouter();
-	const pollId = parseInt(id);
-	const { data: poll, isLoading, error } = useGetPollByIdQuery(pollId);
+	const { data: poll, isLoading, error } = useGetPollByIdQuery(slug);
 
 	return (
 		<AuthGuard>

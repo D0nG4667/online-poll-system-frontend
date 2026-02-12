@@ -1,6 +1,6 @@
 # Plaude Poll 📊
 
-![Plaude Poll Banner](public/logo.png)
+<!-- ![Plaude Poll Banner](public/logo.png) -->
 
 > **The Intelligent, Modern Polling Platform.**
 > Create, Share, and Analyze polls with the power of AI.
@@ -130,7 +130,7 @@ For commercial licensing, custom implementations, or collaboration opportunities
 <br>
 <hr>
 <p align="center">
-  <b>Made with ❤️ by <a href="https://linkedin.com/in/dr-gabriel-okundaye" target="_blank">Gabriel Okundaye, Plaude Poll Team</a></b>
+  <b>Made with ❤️ by <a href="https://linkedin.com/in/dr-gabriel-okundaye" target="_blank">Gabriel Okundaye - Plaude Poll Team</a></b>
   <br>
   🌐 <a href="https://gabcares.xyz" target="_blank">gabcares.xyz</a> &nbsp;|&nbsp; 🐙 <a href="https://github.com/D0nG4667" target="_blank">GitHub</a>
 </p>

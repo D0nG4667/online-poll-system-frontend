@@ -38,7 +38,7 @@ export const pollsApi = createApi({
 	endpoints: (builder) => ({
 		getPolls: builder.query<
 			PaginatedResponse<Poll>,
-			{ page?: number; page_size?: number } | void
+			{ page?: number; page_size?: number } | undefined
 		>({
 			query: (params) => {
 				if (params) {
@@ -103,8 +103,8 @@ export const pollsApi = createApi({
 			}),
 		}),
 		deletePoll: builder.mutation<void, number | string>({
-			query: (id) => ({
-				url: `/polls/${id}/`,
+			query: (slugOrId) => ({
+				url: `/polls/${slugOrId}/`,
 				method: "DELETE",
 			}),
 			invalidatesTags: ["Poll"],

@@ -6,14 +6,14 @@ import {
 	useGetPollsQuery,
 } from "@/services/pollsApi";
 
-export const usePoll = (pollId: number | string) => {
+export const usePoll = (slugOrId: number | string) => {
 	// Poll every 3 seconds if the poll is active (logic can be refined based on poll status)
 	const {
 		data: poll,
 		isLoading,
 		error,
 		refetch,
-	} = useGetPollByIdQuery(pollId, {
+	} = useGetPollByIdQuery(slugOrId, {
 		pollingInterval: 3000,
 	});
 

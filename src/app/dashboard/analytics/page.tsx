@@ -112,11 +112,11 @@ export default function AnalyticsPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="text-2xl font-bold">
-										{stats?.total_polls ?? 12}
+										{stats?.totalPolls ?? 12}
 									</div>
 									<p className="text-xs text-muted-foreground">
-										{(stats?.polls_change ?? 8.2) > 0 ? "+" : ""}
-										{stats?.polls_change ?? 8.2}% vs last period
+										{(stats?.pollsChange ?? 8.2) > 0 ? "+" : ""}
+										{stats?.pollsChange ?? 8.2}% vs last period
 									</p>
 								</CardContent>
 							</Card>
@@ -130,11 +130,11 @@ export default function AnalyticsPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="text-2xl font-bold">
-										{stats?.total_responses ?? 347}
+										{stats?.totalResponses ?? 347}
 									</div>
 									<p className="text-xs text-muted-foreground">
-										{(stats?.responses_change ?? -2.1) > 0 ? "+" : ""}
-										{stats?.responses_change ?? -2.1}% vs last period
+										{(stats?.responsesChange ?? -2.1) > 0 ? "+" : ""}
+										{stats?.responsesChange ?? -2.1}% vs last period
 									</p>
 								</CardContent>
 							</Card>
@@ -148,11 +148,11 @@ export default function AnalyticsPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="text-2xl font-bold">
-										{stats?.avg_response_rate ?? 68}%
+										{stats?.avgResponseRate ?? 68}%
 									</div>
 									<p className="text-xs text-muted-foreground">
-										{(stats?.response_rate_change ?? 0) > 0 ? "+" : ""}
-										{stats?.response_rate_change ?? 0}% vs last period
+										{(stats?.responseRateChange ?? 0) > 0 ? "+" : ""}
+										{stats?.responseRateChange ?? 0}% vs last period
 									</p>
 								</CardContent>
 							</Card>
@@ -166,11 +166,11 @@ export default function AnalyticsPage() {
 								</CardHeader>
 								<CardContent>
 									<div className="text-2xl font-bold">
-										{stats?.total_views ?? 1243}
+										{stats?.totalViews ?? 1243}
 									</div>
 									<p className="text-xs text-muted-foreground">
-										{(stats?.views_change ?? 0) > 0 ? "+" : ""}
-										{stats?.views_change ?? 0}% vs last period
+										{(stats?.viewsChange ?? 0) > 0 ? "+" : ""}
+										{stats?.viewsChange ?? 0}% vs last period
 									</p>
 								</CardContent>
 							</Card>

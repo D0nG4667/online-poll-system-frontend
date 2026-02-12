@@ -1,20 +1,8 @@
-export interface Option {
-	id: number;
-	question: number;
-	text: string;
-	order: number;
-	vote_count?: number;
-}
-
-export type QuestionType = "single" | "multiple" | "text";
-
-export interface Question {
-	id: number;
-	poll: number;
-	text: string;
-	question_type: QuestionType;
-	order: number;
-	options: Option[];
+export interface PaginatedResponse<T> {
+	count: number;
+	next: string | null;
+	previous: string | null;
+	results: T[];
 }
 
 export interface Poll {
@@ -32,11 +20,26 @@ export interface Poll {
 	updated_at: string;
 }
 
+export interface Question {
+	id: number;
+	text: string;
+	question_type: "single" | "multiple"; // Enforce specific strings if possible
+	order: number;
+	options: Option[];
+}
+
+export interface Option {
+	id: number;
+	text: string;
+	order: number;
+}
+
 export interface Vote {
 	id: number;
-	user: string; // UUID string
+	poll: number;
 	question: number;
 	option: number;
+	user: number; // or string if UUID?
 	created_at: string;
 }
 

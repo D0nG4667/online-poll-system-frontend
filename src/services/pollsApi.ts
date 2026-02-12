@@ -4,6 +4,7 @@ import type { RootState } from "../store/store";
 import type {
 	CreateVoteRequest,
 	Option,
+	PaginatedResponse,
 	Poll,
 	Question,
 	Vote,
@@ -35,8 +36,34 @@ export const pollsApi = createApi({
 	}),
 	tagTypes: ["Poll", "Vote"],
 	endpoints: (builder) => ({
-		getPolls: builder.query<Poll[], void>({
-			query: () => "/polls/",
+		getPolls: builder.query<
+			PaginatedResponse<Poll>,
+			{ page?: number; page_size?: number } | void
+		>({
+			query: (params) => {
+				if (params) {
+					const { page, page_size } = params;
+					let queryString = "/polls/";
+					const queryParams = [];
+					if (page) queryParams.push(`page=${page}`);
+					if (page_size) queryParams.push(`page_size=${page_size}`);
+					if (queryParams.length > 0)
+						queryString += `?${queryParams.join("&")}`;
+					return queryString;
+				}
+				return "/polls/";
+			},
+			transformResponse: (response: Poll[] | PaginatedResponse<Poll>) => {
+				if (Array.isArray(response)) {
+					return {
+						count: response.length,
+						next: null,
+						previous: null,
+						results: response,
+					};
+				}
+				return response;
+			},
 			providesTags: ["Poll"],
 		}),
 		getPollById: builder.query<Poll, number | string>({

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -78,7 +78,7 @@ export function PollTable({ polls }: PollTableProps) {
 							<TableCell className="font-medium py-4">
 								<div className="flex flex-col">
 									<Link
-										href={`/polls/${poll.slug || poll.id}`}
+										href={`/polls/${poll.slug}`}
 										className="hover:underline font-semibold text-primary transition-colors hover:text-blue-600"
 									>
 										{poll.title}
@@ -146,7 +146,7 @@ export function PollTable({ polls }: PollTableProps) {
 									>
 										<DropdownMenuLabel>Actions</DropdownMenuLabel>
 										<DropdownMenuItem asChild className="rounded-lg">
-											<Link href={`/polls/${poll.slug || poll.id}`}>
+											<Link href={`/polls/${poll.slug}`}>
 												<Eye className="mr-2 h-4 w-4" /> View Poll
 											</Link>
 										</DropdownMenuItem>
@@ -157,7 +157,9 @@ export function PollTable({ polls }: PollTableProps) {
 											<Share2 className="mr-2 h-4 w-4" /> Share Poll
 										</DropdownMenuItem>
 										<DropdownMenuItem asChild className="rounded-lg">
-											<Link href={`/dashboard/polls/${poll.id}/edit`}>
+											<Link
+												href={`/dashboard/polls/${poll.slug || poll.id}/edit`}
+											>
 												<Pen className="mr-2 h-4 w-4" /> Edit Poll
 											</Link>
 										</DropdownMenuItem>
@@ -181,6 +183,7 @@ export function PollTable({ polls }: PollTableProps) {
 				onOpenChange={(open) => !open && setSharingPoll(null)}
 			>
 				<DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent">
+					<DialogTitle className="sr-only">Share Poll</DialogTitle>
 					{sharingPoll && (
 						<PollDistribution
 							pollId={sharingPoll.id}

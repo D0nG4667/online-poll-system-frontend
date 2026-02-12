@@ -2,14 +2,14 @@
 
 import { ArrowLeft, BarChart2, Loader2, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { AIInsightsPanel } from "@/components/ai/AIInsightsPanel";
 import AuthGuard from "@/components/auth/AuthGuard";
 import { PollDistribution } from "@/components/polls/PollDistribution";
 import { PollResults } from "@/components/polls/PollResults";
 import { QuestionCard } from "@/components/polls/QuestionCard";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePoll } from "@/hooks/usePoll";
@@ -22,6 +22,14 @@ export default function PollDetailPage({
 	const { slug } = use(params);
 	const router = useRouter();
 	const { poll, isLoading, error, handleVote, isVoting } = usePoll(slug);
+
+	// Redirect to slug if we loaded via ID and slug exists
+	// This ensures users always see the slug in the URL
+	useEffect(() => {
+		if (poll?.slug && poll?.id && slug === poll.id.toString()) {
+			router.replace(`/polls/${poll.slug}`);
+		}
+	}, [poll, slug, router]);
 
 	// Simple state for single-question polls (MVP)
 	// For multi-question, we'd need a map of questionId -> optionId
@@ -59,11 +67,12 @@ export default function PollDetailPage({
 
 				<Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
 					<DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent">
+						<DialogTitle className="sr-only">Share Poll</DialogTitle>
 						{poll && (
 							<PollDistribution
 								pollId={poll.id}
 								pollSlug={poll.slug}
-								initialTitle={poll.title}
+								title={poll.title}
 								initialDescription={poll.description}
 							/>
 						)}

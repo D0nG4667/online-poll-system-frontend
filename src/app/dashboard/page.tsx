@@ -146,7 +146,9 @@ export default function DashboardPage() {
 										<div
 											key={poll.id}
 											className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
-											onClick={() => router.push(`/polls/${poll.id}`)}
+											onClick={() =>
+												router.push(`/polls/${poll.slug || poll.id}`)
+											}
 										>
 											<div className="flex-1">
 												<p className="font-medium">{poll.title}</p>

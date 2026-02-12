@@ -17,9 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Plaude Poll | Create a poll in seconds",
+	title: "Plaude Polll | Create a poll in seconds",
 	description:
-		"The simplest way to create and share polls. Get instant results and analytics with Plaude Poll.",
+		"The simplest way to create and share polls. Get instant results and analytics with Plaude Polll.",
 };
 
 export default function RootLayout({

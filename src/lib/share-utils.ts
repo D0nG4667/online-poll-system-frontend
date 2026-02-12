@@ -2,19 +2,30 @@
  * Formats a poll URL for sharing
  */
 export const getPollUrl = (
-	pollIdentifier: string | number,
+	pollSlug?: string,
+	_pollId?: string | number,
 	origin?: string,
 ) => {
 	const base =
 		origin || (typeof window !== "undefined" ? window.location.origin : "");
-	return `${base}/polls/${pollIdentifier}`;
+
+	if (!pollSlug) {
+		console.warn("getPollUrl called without pollSlug");
+		return "";
+	}
+
+	return `${base}/polls/${pollSlug}`;
 };
 
 /**
  * Generates an iframe embed code for a poll
  */
-export const getEmbedCode = (pollId: string | number, origin?: string) => {
-	const url = getPollUrl(pollId, origin);
+export const getEmbedCode = (
+	pollSlug: string,
+	pollId: string | number,
+	origin?: string,
+) => {
+	const url = getPollUrl(pollSlug, pollId, origin);
 	return `<iframe src="${url}" width="100%" height="600" frameborder="0" style="border:0; border-radius: 8px;" allowfullscreen></iframe>`;
 };
 

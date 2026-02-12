@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { PollTable } from "@/components/polls/PollTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useGetPollsQuery } from "@/services/pollsApi";
@@ -13,9 +14,19 @@ import { useGetPollsQuery } from "@/services/pollsApi";
 type PollStatus = "all" | "active" | "draft" | "completed";
 
 export default function MyPollsPage() {
-	const { data: polls, isLoading, error } = useGetPollsQuery();
+	const [page, setPage] = useState(1);
+	const pageSize = 9;
+	const { data, isLoading, error } = useGetPollsQuery({
+		page,
+		page_size: pageSize,
+	});
+
 	const [searchQuery, setSearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState<PollStatus>("all");
+
+	const polls = data?.results || [];
+	const totalCount = data?.count || 0;
+	const totalPages = Math.ceil(totalCount / pageSize);
 
 	const filteredPolls = useMemo(() => {
 		if (!polls) return [];
@@ -125,8 +136,21 @@ export default function MyPollsPage() {
 							</Button>
 						</div>
 					) : filteredPolls.length > 0 ? (
-						<div className="border rounded-2xl overflow-hidden bg-white/50 dark:bg-muted/5 shadow-sm">
-							<PollTable polls={filteredPolls} />
+						<div className="flex flex-col space-y-4">
+							<div className="border rounded-2xl overflow-hidden bg-white/50 dark:bg-muted/5 shadow-sm">
+								<PollTable polls={filteredPolls} />
+							</div>
+
+							{/* Pagination Controls */}
+							{totalCount > pageSize && (
+								<PaginationControls
+									currentPage={page}
+									totalPages={totalPages}
+									onPageChange={setPage}
+									hasNext={!!data?.next}
+									hasPrevious={!!data?.previous}
+								/>
+							)}
 						</div>
 					) : (
 						/* 🎨 Redesigned Empty State */
@@ -176,19 +200,19 @@ export default function MyPollsPage() {
 			<footer className="border-t py-6 bg-background/50">
 				<div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
 					<div className="flex flex-col md:flex-row items-center gap-4">
-						<span>© 2025 PollGPT. All rights reserved.</span>
+						<span>© 2026 Plaude Poll. All rights reserved.</span>
 						<div className="flex items-center gap-2">
 							<span className="hidden md:inline">•</span>
 							<a
-								href="mailto:contact@pollgpt.com"
+								href="mailto:contact@plaudepoll.com"
 								className="hover:text-foreground transition-colors"
 							>
-								contact@pollgpt.com
+								contact@plaudepoll.com
 							</a>
 						</div>
 						<div className="flex items-center gap-2">
 							<span className="hidden md:inline">•</span>
-							<span>5 Parv. Alan Turing, 75013 Paris, France</span>
+							<span>Melbourne, Australia</span>
 						</div>
 					</div>
 					<div className="flex items-center gap-6">

@@ -8,6 +8,7 @@ export const GET_POLL_DISTRIBUTION_DATA = gql`
     poll(id: $id) {
       id
       title
+      slug
       description
       is_active
       is_open
@@ -19,6 +20,7 @@ export interface PollDistributionData {
 	poll: {
 		id: string;
 		title: string;
+		slug: string;
 		description: string;
 		is_active: boolean;
 		is_open: boolean;

@@ -61,7 +61,7 @@ const graphqlBaseQuery =
 export const analyticsApi = createApi({
 	reducerPath: "analyticsApi",
 	baseQuery: graphqlBaseQuery(),
-	tagTypes: ["Analytics", "UNAUTHORIZED", "UNKNOWN_ERROR"],
+	tagTypes: ["Analytics", "Poll", "UNAUTHORIZED", "UNKNOWN_ERROR"],
 
 	endpoints: (builder) => ({
 		// Get overall statistics

@@ -88,7 +88,7 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 										{!useMockData && (
 											<>
 												<Link
-													href={`/polls/${poll.slug || poll.id}`}
+													href={`/polls/${poll.slug}`}
 													className="inline-flex items-center text-primary hover:underline"
 												>
 													<ArrowUpRight className="h-4 w-4" />

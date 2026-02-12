@@ -73,7 +73,7 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 									<TableCell className="text-right">{poll.responses}</TableCell>
 									<TableCell className="text-right">{poll.views}</TableCell>
 									<TableCell className="text-right">
-										{poll.response_rate.toFixed(1)}%
+										{poll.responseRate.toFixed(1)}%
 									</TableCell>
 									<TableCell>
 										<Badge
@@ -149,9 +149,9 @@ function getMockPolls() {
 			slug: "favorite-programming-language",
 			responses: 247,
 			views: 1043,
-			response_rate: 23.7,
+			responseRate: 23.7,
 			status: "active" as const,
-			created_at: new Date().toISOString(),
+			createdAt: new Date().toISOString(),
 		},
 		{
 			id: 2,
@@ -159,9 +159,9 @@ function getMockPolls() {
 			slug: "team-lunch-preferences",
 			responses: 89,
 			views: 156,
-			response_rate: 57.1,
+			responseRate: 57.1,
 			status: "active" as const,
-			created_at: new Date().toISOString(),
+			createdAt: new Date().toISOString(),
 		},
 		{
 			id: 3,
@@ -169,9 +169,9 @@ function getMockPolls() {
 			slug: "office-hours-feedback",
 			responses: 45,
 			views: 98,
-			response_rate: 45.9,
+			responseRate: 45.9,
 			status: "closed" as const,
-			created_at: new Date().toISOString(),
+			createdAt: new Date().toISOString(),
 		},
 	];
 }

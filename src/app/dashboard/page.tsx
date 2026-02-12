@@ -22,11 +22,10 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { usePolls } from "@/hooks/usePoll";
-import { useAppSelector } from "@/store/hooks";
 
 export default function DashboardPage() {
 	const router = useRouter();
-	const user = useAppSelector((state) => state.auth.user);
+
 	const { polls } = usePolls();
 
 	// Get time-based greeting
@@ -140,12 +139,13 @@ export default function DashboardPage() {
 							</div>
 						</CardHeader>
 						<CardContent>
-							{polls && polls.length > 0 ? (
+							{polls?.results && polls.results.length > 0 ? (
 								<div className="space-y-4">
-									{polls.slice(0, 3).map((poll) => (
-										<div
+									{polls.results.slice(0, 3).map((poll) => (
+										<button
 											key={poll.id}
-											className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
+											type="button"
+											className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors text-left"
 											onClick={() =>
 												router.push(`/polls/${poll.slug || poll.id}`)
 											}
@@ -159,7 +159,7 @@ export default function DashboardPage() {
 											<Button variant="ghost" size="sm">
 												View →
 											</Button>
-										</div>
+										</button>
 									))}
 								</div>
 							) : (

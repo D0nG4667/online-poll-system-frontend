@@ -36,7 +36,8 @@ const optionSchema = z.object({
 const questionSchema = z.object({
 	id: z.number().optional(),
 	text: z.string().min(3, "Question text must be at least 3 characters"),
-	question_type: z.enum(["single", "multiple", "text"]),
+	question_type: z.enum(["single", "multiple"]),
+	order: z.number(),
 	options: z.array(optionSchema).min(2, "At least 2 options are required"),
 });
 
@@ -75,7 +76,8 @@ export function EditPollForm({ poll }: EditPollFormProps) {
 			questions: poll.questions.map((q) => ({
 				id: q.id,
 				text: q.text,
-				question_type: q.question_type as "single" | "multiple" | "text",
+				question_type: q.question_type as "single" | "multiple",
+				order: q.order,
 				options: q.options.map((o) => ({
 					id: o.id,
 					text: o.text || "",
@@ -96,7 +98,8 @@ export function EditPollForm({ poll }: EditPollFormProps) {
 	const onSubmit = async (values: PollFormValues) => {
 		setIsSubmitting(true);
 		try {
-			await updatePoll({ id: poll.id, data: values }).unwrap();
+			// biome-ignore lint/suspicious/noExplicitAny: bypassed due to mutation payload casting
+			await updatePoll({ id: poll.id, data: values as any }).unwrap();
 			toast.success("Poll updated successfully! ✨");
 			router.push("/dashboard/polls");
 		} catch (error) {
@@ -199,6 +202,7 @@ export function EditPollForm({ poll }: EditPollFormProps) {
 							appendQuestion({
 								text: "",
 								question_type: "single",
+								order: questionFields.length,
 								options: [{ text: "" }, { text: "" }],
 							})
 						}

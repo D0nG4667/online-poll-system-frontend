@@ -32,7 +32,7 @@ export function ResponseRateChart({ timePeriod }: ResponseRateChartProps) {
 	const useMockData = isError || !data;
 	const chartData = useMockData
 		? generateMockData(timePeriod)
-		: data.response_rate.map((point) => ({
+		: data.responseRate.map((point) => ({
 				date: new Date(point.date).toLocaleDateString("en-US", {
 					month: "short",
 					day: "numeric",

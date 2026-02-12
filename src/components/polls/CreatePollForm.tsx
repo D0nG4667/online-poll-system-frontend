@@ -13,7 +13,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
 	type Control,
-	type FieldErrors,
 	type UseFormRegister,
 	useFieldArray,
 	useForm,
@@ -48,7 +47,8 @@ const optionSchema = z.object({
 
 const questionSchema = z.object({
 	text: z.string().min(3, "Question text must be at least 3 characters"),
-	question_type: z.enum(["single", "multiple", "text"]),
+	question_type: z.enum(["single", "multiple"]),
+	order: z.number(),
 	options: z.array(optionSchema).min(2, "At least 2 options are required"),
 });
 
@@ -108,9 +108,10 @@ export function CreatePollForm() {
 		form.setValue("description", data.description, { shouldValidate: true });
 		form.setValue(
 			"questions",
-			data.questions.map((q) => ({
+			data.questions.map((q, idx) => ({
 				text: q.text,
-				question_type: q.question_type,
+				question_type: q.question_type as "single" | "multiple",
+				order: idx,
 				options: q.options.map((o) => ({ text: o.text })),
 			})),
 			{ shouldValidate: true },
@@ -235,6 +236,7 @@ export function CreatePollForm() {
 								appendQuestion({
 									text: "",
 									question_type: "single",
+									order: questionFields.length,
 									options: [{ text: "" }, { text: "" }],
 								})
 							}
@@ -346,7 +348,8 @@ interface QuestionFieldProps {
 	control: Control<PollFormValues>;
 	register: UseFormRegister<PollFormValues>;
 	remove: () => void;
-	errors?: any; // Simplified to bypass complex nesting issues
+	// biome-ignore lint/suspicious/noExplicitAny: bypassed due to complex FieldErrors nesting
+	errors?: any;
 	isSubmitting: boolean;
 }
 

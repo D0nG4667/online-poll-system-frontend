@@ -32,6 +32,7 @@ export interface Option {
 	id: number;
 	text: string;
 	order: number;
+	voteCount?: number;
 }
 
 export interface Vote {

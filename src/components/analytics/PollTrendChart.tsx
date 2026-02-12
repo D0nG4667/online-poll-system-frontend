@@ -32,7 +32,7 @@ export function PollTrendChart({ timePeriod }: PollTrendChartProps) {
 	const useMockData = isError || !data;
 	const chartData = useMockData
 		? generateMockData(timePeriod)
-		: data.poll_creation.map((point) => ({
+		: data.pollCreation.map((point) => ({
 				date: new Date(point.date).toLocaleDateString("en-US", {
 					month: "short",
 					day: "numeric",

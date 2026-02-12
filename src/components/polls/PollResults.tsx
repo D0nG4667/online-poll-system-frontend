@@ -28,7 +28,7 @@ export function PollResults({ poll }: PollResultsProps) {
 			{poll.questions.map((question, qIndex) => {
 				const data = question.options.map((option) => ({
 					name: option.text,
-					votes: option.vote_count || Math.floor(Math.random() * 10), // Fallback/Mock for demo if 0
+					votes: option.voteCount || Math.floor(Math.random() * 10), // Fallback/Mock for demo if 0
 				}));
 
 				return (
@@ -62,9 +62,9 @@ export function PollResults({ poll }: PollResultsProps) {
 											}}
 										/>
 										<Bar dataKey="votes" radius={[0, 4, 4, 0]}>
-											{data.map((entry, index) => (
+											{data.map((_entry, index) => (
 												<Cell
-													key={`cell-${index}`}
+													key={`${question.id}-cell-${index}`}
 													fill={COLORS[index % COLORS.length]}
 												/>
 											))}

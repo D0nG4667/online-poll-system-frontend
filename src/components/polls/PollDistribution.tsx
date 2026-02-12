@@ -10,7 +10,6 @@ import {
 	Twitter,
 } from "lucide-react";
 import { useQRCode } from "next-qrcode";
-import { useState } from "react";
 import {
 	EmailShareButton,
 	FacebookShareButton,
@@ -36,7 +35,7 @@ import { useGetPollDistributionDataQuery } from "@/services/analyticsApi";
 
 interface PollDistributionProps {
 	pollId: string | number;
-	pollSlug?: string;
+	pollSlug: string;
 	title: string;
 	initialTitle?: string;
 	initialDescription?: string;
@@ -58,14 +57,11 @@ export function PollDistribution({
 	const title = fetchedPoll?.title || initialTitle || defaultTitle;
 	const description = fetchedPoll?.description || initialDescription || "";
 
-	// Determine if we're still waiting for essential data (slug)
-	// If initialSlug is provided, we can show that immediately.
-	// Otherwise, we wait for the query to return the slug.
-	const isResolvingSlug = !initialSlug && isLoading;
+	// Use the provided slug or the fetched one
 	const effectiveSlug = fetchedPoll?.slug || initialSlug;
+	const isResolvingSlug = !effectiveSlug && isLoading;
+	const origin = typeof window !== "undefined" ? window.location.origin : "";
 
-	// Only fallback to ID if we are done loading and strictly have no slug (backend issue)
-	// But we try to hide this state if possible during loading.
 	const displayUrl =
 		isResolvingSlug || !origin ? "" : getPollUrl(effectiveSlug, pollId, origin);
 

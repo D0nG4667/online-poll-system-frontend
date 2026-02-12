@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { CalendarDays, Users } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ export function PollCard({ poll }: PollCardProps) {
 					variant={isActive ? "default" : "secondary"}
 					disabled={!isActive}
 				>
-					<Link href={`/polls/${poll.slug || poll.id}`}>
+					<Link href={`/polls/${poll.slug}`}>
 						{isActive ? "Vote Now" : "View Results"}
 					</Link>
 				</Button>

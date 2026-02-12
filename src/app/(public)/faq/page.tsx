@@ -56,7 +56,10 @@ export default function FAQPage() {
 						friendly team.
 					</p>
 					<div className="pt-4">
-						<button className="px-8 h-12 rounded-xl bg-[#F36B21] text-white font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20">
+						<button
+							type="button"
+							className="px-8 h-12 rounded-xl bg-[#F36B21] text-white font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
+						>
 							Get in Touch
 						</button>
 					</div>

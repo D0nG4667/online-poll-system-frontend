@@ -157,9 +157,7 @@ export function PollTable({ polls }: PollTableProps) {
 											<Share2 className="mr-2 h-4 w-4" /> Share Poll
 										</DropdownMenuItem>
 										<DropdownMenuItem asChild className="rounded-lg">
-											<Link
-												href={`/dashboard/polls/${poll.slug || poll.id}/edit`}
-											>
+											<Link href={`/dashboard/polls/${poll.slug}/edit`}>
 												<Pen className="mr-2 h-4 w-4" /> Edit Poll
 											</Link>
 										</DropdownMenuItem>

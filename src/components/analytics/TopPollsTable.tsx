@@ -23,10 +23,8 @@ interface TopPollsTableProps {
 
 export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 	const { data, isLoading, isError } = useGetTopPollsQuery(timePeriod);
-	const [sharingPollId, setSharingPollId] = useState<number | string | null>(
-		null,
-	);
-	const [sharingPollSlug, setSharingPollSlug] = useState<string>("");
+	const [sharingPollSlug, setSharingPollSlug] = useState<string | null>(null);
+	const [sharingPollId, setSharingPollId] = useState<number | string>("");
 	const [sharingPollTitle, setSharingPollTitle] = useState<string>("");
 
 	if (isLoading) {
@@ -96,8 +94,8 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 												<button
 													type="button"
 													onClick={() => {
+														setSharingPollSlug(poll.slug);
 														setSharingPollId(poll.id);
-														setSharingPollSlug(poll.slug || "");
 														setSharingPollTitle(poll.title);
 													}}
 													className="text-muted-foreground hover:text-primary transition-colors"
@@ -124,11 +122,11 @@ export function TopPollsTable({ timePeriod }: TopPollsTableProps) {
 			</div>
 
 			<Dialog
-				open={!!sharingPollId}
-				onOpenChange={(open) => !open && setSharingPollId(null)}
+				open={!!sharingPollSlug}
+				onOpenChange={(open) => !open && setSharingPollSlug(null)}
 			>
 				<DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent">
-					{sharingPollId && (
+					{sharingPollSlug && (
 						<PollDistribution
 							pollId={sharingPollId}
 							pollSlug={sharingPollSlug}

@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { ErrorLayout } from "@/components/layout/ErrorLayout";
 import { Button } from "@/components/ui/button";
 
-export default function Error({
+export default function GlobalError({
 	error,
 	reset,
 }: {

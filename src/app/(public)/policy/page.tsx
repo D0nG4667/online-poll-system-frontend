@@ -93,7 +93,12 @@ export default function CookiePolicyPage() {
 	);
 }
 
-function CookieInfoCard({ title, description }: any) {
+interface CookieInfoCardProps {
+	title: string;
+	description: string;
+}
+
+function CookieInfoCard({ title, description }: CookieInfoCardProps) {
 	return (
 		<div className="p-6 rounded-2xl bg-card border border-border shadow-sm">
 			<h4 className="font-bold text-slate-800 mb-2">{title}</h4>

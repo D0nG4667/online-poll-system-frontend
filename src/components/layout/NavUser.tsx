@@ -9,6 +9,7 @@ import {
 	Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -25,7 +26,8 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { logout } from "@/store/features/auth/authSlice";
+import { useLogoutMutation } from "@/services/authApi";
+import { logout as clearLocalAuthState } from "@/store/features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 export function NavUser() {
@@ -34,8 +36,21 @@ export function NavUser() {
 	const dispatch = useAppDispatch();
 	const router = useRouter();
 
-	const handleLogout = () => {
-		dispatch(logout());
+	const [logoutMutation] = useLogoutMutation();
+
+	const handleLogout = async () => {
+		try {
+			// 1. Terminate session on backend (clears cookies)
+			await logoutMutation().unwrap();
+			console.log("Logout: Backend session terminated.");
+		} catch (error) {
+			console.error("Logout: Backend termination failed:", error);
+			// We still proceed to clear local state if user wants to log out
+		}
+
+		// 2. Clear local auth state
+		dispatch(clearLocalAuthState());
+		toast.success("Signed out successfully");
 		router.push("/signin");
 	};
 

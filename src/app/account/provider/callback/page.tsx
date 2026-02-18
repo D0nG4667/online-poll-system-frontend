@@ -7,6 +7,7 @@ import { Icons } from "@/components/icons";
 import { useGetSessionQuery } from "@/services/authApi";
 import { setCredentials } from "@/store/features/auth/authSlice";
 import { useAppDispatch } from "@/store/hooks";
+import type { AuthenticatedMeta } from "@/types/auth";
 
 function AuthCallbackContent() {
 	const router = useRouter();
@@ -28,9 +29,22 @@ function AuthCallbackContent() {
 		if (!isLoading) {
 			if (data?.status === 200 && data.data?.user) {
 				const user = data.data.user;
-				const sessionToken = data.meta?.session_token;
-				const accessToken = data.meta?.access_token;
-				const refreshToken = data.meta?.refresh_token;
+				const meta = data.meta;
+
+				let sessionToken: string | undefined;
+				let accessToken: string | undefined;
+				let refreshToken: string | undefined;
+
+				if (
+					meta &&
+					"is_authenticated" in meta &&
+					(meta as AuthenticatedMeta).is_authenticated
+				) {
+					const authenticatedMeta = meta as AuthenticatedMeta;
+					sessionToken = authenticatedMeta.session_token;
+					accessToken = authenticatedMeta.access_token;
+					refreshToken = authenticatedMeta.refresh_token;
+				}
 
 				dispatch(
 					setCredentials({

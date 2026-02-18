@@ -1,19 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getCSRFToken } from "../lib/csrf";
-// import { logout, setCredentials } from "../store/features/auth/authSlice";
-// Removed unused imports
-
-// Only import types if needed, but we can't import AuthState if it's not exported from store.
-// We'll access the state via RootState.auth which is typed.
-
-// Django Allauth Headless typically uses specific endpoints.
-// We'll assume a standard configuration under /_allauth/app/v1/ or similar,
-// but often proxied to /api/auth.
-// For this MVP, we will use generic paths that the user can map,
-// but formatted for the headless responses.
-
 import type {
 	AllauthResponse,
+	ConfirmLoginCodeRequest,
 	ProviderRedirectRequest,
 	ProviderTokenRequest,
 	RequestPasswordRequest,
@@ -21,9 +10,6 @@ import type {
 	SigninRequest,
 	SignupRequest,
 } from "../types/auth";
-
-// Allauth Headless Response Structure
-// Imported from types/auth.ts
 
 export const authApi = createApi({
 	reducerPath: "authApi",
@@ -46,8 +32,11 @@ export const authApi = createApi({
 			return headers;
 		},
 	}),
-
+	tagTypes: ["Session"],
 	endpoints: (builder) => ({
+		/**
+		 * Authenticates a user using email and password.
+		 */
 		signin: builder.mutation<AllauthResponse, SigninRequest>({
 			query: (credentials) => ({
 				url: "auth/login",
@@ -55,6 +44,10 @@ export const authApi = createApi({
 				body: credentials,
 			}),
 		}),
+
+		/**
+		 * Registers a new user.
+		 */
 		signup: builder.mutation<AllauthResponse, SignupRequest>({
 			query: (userData) => ({
 				url: "auth/signup",
@@ -62,22 +55,29 @@ export const authApi = createApi({
 				body: userData,
 			}),
 		}),
+
+		/**
+		 * Retrieves the current session status.
+		 */
 		getSession: builder.query<AllauthResponse, void>({
 			query: () => "auth/session",
+			providesTags: ["Session"],
 		}),
+
+		/**
+		 * Terminated the current session.
+		 */
 		logout: builder.mutation<AllauthResponse, void>({
 			query: () => ({
 				url: "auth/session",
 				method: "DELETE",
 			}),
+			invalidatesTags: ["Session"],
 		}),
-		refreshToken: builder.mutation<AllauthResponse, { refresh_token: string }>({
-			query: (body) => ({
-				url: "auth/token", // Assuming token endpoint exists or is different for browser? Browser usu uses cookies.
-				method: "POST",
-				body,
-			}),
-		}),
+
+		/**
+		 * Requests a password reset email.
+		 */
 		requestPassword: builder.mutation<AllauthResponse, RequestPasswordRequest>({
 			query: (body) => ({
 				url: "auth/password/request",
@@ -85,6 +85,10 @@ export const authApi = createApi({
 				body,
 			}),
 		}),
+
+		/**
+		 * Resets password using a key.
+		 */
 		resetPassword: builder.mutation<AllauthResponse, ResetPasswordRequest>({
 			query: (body) => ({
 				url: "auth/password/reset",
@@ -92,6 +96,10 @@ export const authApi = createApi({
 				body,
 			}),
 		}),
+
+		/**
+		 * Validates a password reset key via GET.
+		 */
 		validateResetKey: builder.query<AllauthResponse, string>({
 			query: (key) => ({
 				url: "auth/password/reset",
@@ -100,6 +108,10 @@ export const authApi = createApi({
 				},
 			}),
 		}),
+
+		/**
+		 * Initiates provider redirect for social auth.
+		 */
 		providerRedirect: builder.mutation<
 			{ location: string },
 			ProviderRedirectRequest
@@ -110,9 +122,27 @@ export const authApi = createApi({
 				body,
 			}),
 		}),
+
+		/**
+		 * Handles provider token exchange.
+		 */
 		providerToken: builder.mutation<AllauthResponse, ProviderTokenRequest>({
 			query: (body) => ({
 				url: "auth/provider/token",
+				method: "POST",
+				body,
+			}),
+		}),
+
+		/**
+		 * Confirms a login code (passwordless).
+		 */
+		confirmLoginCode: builder.mutation<
+			AllauthResponse,
+			ConfirmLoginCodeRequest
+		>({
+			query: (body) => ({
+				url: "auth/code/confirm",
 				method: "POST",
 				body,
 			}),
@@ -125,10 +155,10 @@ export const {
 	useSignupMutation,
 	useGetSessionQuery,
 	useLogoutMutation,
-	useRefreshTokenMutation,
 	useRequestPasswordMutation,
 	useResetPasswordMutation,
 	useValidateResetKeyQuery,
 	useProviderRedirectMutation,
 	useProviderTokenMutation,
+	useConfirmLoginCodeMutation,
 } = authApi;

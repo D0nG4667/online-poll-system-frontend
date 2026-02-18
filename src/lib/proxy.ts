@@ -12,6 +12,7 @@ export async function proxyRequest(
 	options: { addTrailingSlash?: boolean } = { addTrailingSlash: true },
 ) {
 	// Always add trailing slash for Django API paths if requested (Django is strict about this)
+	// segments[0] is usually "_allauth"
 	const pathname = `/${segments.join("/")}${options.addTrailingSlash ? "/" : ""}`;
 	console.log(`[Proxy] Forwarding to: ${pathname}`);
 	const url = new URL(pathname, BACKEND_URL);
@@ -26,9 +27,24 @@ export async function proxyRequest(
 	const csrfToken = request.cookies.get("csrftoken")?.value;
 
 	// OVERRIDE: Set Origin and Referer to match the backend expectations
-	// This is key for Django CSRF protection
-	requestHeaders.set("Origin", BACKEND_URL);
-	requestHeaders.set("Referer", BACKEND_URL);
+	// This is key for Django CSRF protection.
+	// We want to pass the headers from the request but swap the HOST to match the backend if needed,
+	// or ensure the origin is trusted.
+	const origin = request.headers.get("origin");
+	if (origin) {
+		requestHeaders.set("Origin", BACKEND_URL);
+	}
+	const referer = request.headers.get("referer");
+	if (referer) {
+		try {
+			const refererUrl = new URL(referer);
+			refererUrl.host = new URL(BACKEND_URL).host;
+			refererUrl.protocol = new URL(BACKEND_URL).protocol;
+			requestHeaders.set("Referer", refererUrl.toString());
+		} catch {
+			requestHeaders.set("Referer", BACKEND_URL);
+		}
+	}
 
 	// Delete headers that can cause issues when proxied
 	requestHeaders.delete("host");
@@ -85,9 +101,19 @@ export async function proxyRequest(
 				}
 
 				console.log(`[Proxy] Redirecting browser to: ${finalUrl.toString()}`);
-				return NextResponse.redirect(finalUrl, {
+				const redirectResponse = NextResponse.redirect(finalUrl, {
 					status: response.status,
 				});
+
+				// IMPORTANT: Copy Set-Cookie headers to the redirect response!
+				const setCookies = response.headers.getSetCookie();
+				if (setCookies.length > 0) {
+					for (const cookie of setCookies) {
+						redirectResponse.headers.append("Set-Cookie", cookie);
+					}
+				}
+
+				return redirectResponse;
 			}
 		}
 

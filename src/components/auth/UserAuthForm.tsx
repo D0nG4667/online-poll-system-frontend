@@ -22,7 +22,7 @@ import {
 } from "@/services/authApi";
 import { setCredentials } from "@/store/features/auth/authSlice";
 import { useAppDispatch } from "@/store/hooks";
-import type { AllauthResponse, AuthError, Flow } from "@/types/auth";
+import type { AllauthResponse, AuthenticatedMeta } from "@/types/auth";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
 	mode: "signin" | "signup";
@@ -85,8 +85,10 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 			}
 
 			// The callback URL must match exactly what is configured in Google Cloud Console
-			const callbackUrl = "http://localhost:3001/account/provider/callback/";
-			const action = "/allauth/browser/v1/auth/provider/redirect";
+			const frontendUrl =
+				process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
+			const callbackUrl = `${frontendUrl}/account/provider/callback`;
+			const action = "/_allauth/browser/v1/auth/provider/redirect";
 
 			// Create a form and submit it synchronously
 			const form = document.createElement("form");
@@ -142,31 +144,36 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 						confirmPassword: data.confirmPassword,
 					}).unwrap();
 				}
-			} catch (error: any) {
-				// Hotfix: Handle PARSING_ERROR where 200 OK is treated as failure
-				// This happens if the backend response is somehow malformed or Content-Type is issue
+			} catch (err: unknown) {
+				const error = err as {
+					status?: string | number;
+					originalStatus?: number;
+					data?: unknown;
+				};
+
+				// Hotfix: Handle PARSING_ERROR
 				if (
-					error?.status === "PARSING_ERROR" &&
-					error?.originalStatus === 200 &&
-					typeof error?.data === "string"
+					error.status === "PARSING_ERROR" &&
+					error.originalStatus === 200 &&
+					typeof error.data === "string"
 				) {
 					try {
-						const parsed = JSON.parse(error.data);
+						const parsed = JSON.parse(error.data) as AllauthResponse;
 						if (parsed.status === 200 || parsed.status === 201) {
 							console.log("Recovered from PARSING_ERROR:", parsed);
 							response = parsed;
 						} else {
-							throw error;
+							throw err;
 						}
 					} catch {
-						throw error;
+						throw err;
 					}
 				} else {
-					throw error;
+					throw err;
 				}
 			}
 
-			console.log("Auth Response Raw:", response);
+			console.log("Auth Response:", response);
 
 			if (response.status === 200 || response.status === 201) {
 				toast.success(
@@ -175,14 +182,25 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 						: "Account created successfully",
 				);
 
-				// For browser client, tokens might be in HTTP-only cookies, so meta might be empty.
-				// We still try to extract user info if available.
+				const meta = response.meta;
 				const user = response.data?.user;
-				const sessionToken = response.meta?.session_token;
-				const accessToken = response.meta?.access_token;
-				const refreshToken = response.meta?.refresh_token;
 
 				if (user) {
+					let sessionToken: string | undefined;
+					let accessToken: string | undefined;
+					let refreshToken: string | undefined;
+
+					if (
+						meta &&
+						"is_authenticated" in meta &&
+						(meta as AuthenticatedMeta).is_authenticated
+					) {
+						const authenticatedMeta = meta as AuthenticatedMeta;
+						sessionToken = authenticatedMeta.session_token;
+						accessToken = authenticatedMeta.access_token;
+						refreshToken = authenticatedMeta.refresh_token;
+					}
+
 					dispatch(
 						setCredentials({
 							user,
@@ -191,89 +209,52 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 							refreshToken,
 						}),
 					);
-				} else {
-					// If no user data returned immediately (common in some browser flows),
-					// we might need to fetch session or just redirect.
-					// For now, assuming if 200 OK, we are good to go.
 				}
 
 				router.push("/dashboard");
-				router.refresh(); // Refresh to ensure layout updates with new cookie
-			} else if (response.errors) {
-				response.errors.forEach((err: AuthError) => {
+				router.refresh();
+			} else if (response.errors && response.errors.length > 0) {
+				response.errors.forEach((err) => {
 					if (err.param) {
 						form.setError(err.param as keyof AuthFormValues, {
 							message: err.message,
 						});
+					} else {
+						toast.error(err.message || "An error occurred");
 					}
 				});
-			}
-		} catch (err: unknown) {
-			const error = err as AllauthResponse;
-			console.error("--- SUBMISSION EXCEPTION START ---");
-			console.error("Error Object (Raw):", error);
-			if (error && typeof error === "object") {
-				console.error("Error Status:", error.status);
-				console.error("Error Data:", JSON.stringify(error.data));
-
-				if (error.status === 400 || error.status === 429) {
-					// 400 Bad Request, 429 Too Many Requests
-				} else if (error.status === 401) {
-					let data = error.data;
-					if (typeof data === "string") {
-						try {
-							data = JSON.parse(data);
-						} catch (e) {
-							console.error("Failed to parse error data string:", e);
-						}
-					}
-
-					const flows = data?.flows || [];
-					const verifyEmailFlow = Array.isArray(flows)
-						? flows.find((f: Flow) => f.id === "verify_email")
-						: null;
-
-					if (verifyEmailFlow?.is_pending) {
-						toast.info(
-							"Verification email sent! Please check your inbox to continue.",
-						);
-					} else {
-						toast.error(
-							"Unauthorized: Please check your email or credentials.",
-						);
-					}
-				} else if (error.status === 409) {
-					if (mode === "signin") {
-						toast.error("You are already signed in.");
-					} else {
-						toast.error(
-							"Account already exists with this email. Please Sign In or reset your password.",
-						);
-					}
-				} else if ((error as { status: unknown }).status === "FETCH_ERROR") {
-					toast.error("Network error: Unable to reach the server.");
-				}
 			} else {
 				toast.error("An unexpected error occurred.");
 			}
-			console.error("--- SUBMISSION EXCEPTION END ---");
+		} catch (err: unknown) {
+			console.error("Auth Submission Error", err);
 
-			if (error?.data?.errors) {
-				error.data.errors.forEach((err: AuthError) => {
-					if (err.param) {
-						form.setError(err.param as keyof AuthFormValues, {
-							message: err.message,
+			// Handle RTK Query Error structure
+			const rtkError = err as {
+				status: number | string;
+				data?: AllauthResponse;
+			};
+
+			if (rtkError.data?.errors) {
+				rtkError.data.errors.forEach((authErr) => {
+					if (authErr.param) {
+						form.setError(authErr.param as keyof AuthFormValues, {
+							message: authErr.message,
 						});
+					} else {
+						toast.error(authErr.message || "An error occurred");
 					}
 				});
-			} else if (error?.errors) {
-				error.errors.forEach((err: AuthError) => {
-					if (err.param) {
-						form.setError(err.param as keyof AuthFormValues, {
-							message: err.message,
-						});
-					}
-				});
+			} else if (rtkError.status === 401) {
+				toast.error("Invalid credentials.");
+			} else if (rtkError.status === 400) {
+				toast.error("Bad request. Please check your inputs.");
+			} else if (rtkError.status === 405) {
+				toast.error(
+					"API configuration error (405). Please contact support. (Trailing slash issue resolved?)",
+				);
+			} else {
+				toast.error("An unexpected error occurred. Please try again.");
 			}
 		} finally {
 			setIsLoading(false);

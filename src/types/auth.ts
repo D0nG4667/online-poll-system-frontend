@@ -1,4 +1,4 @@
-// Based on allauth-openapi.json & Plaude Poll API.yaml
+// Based on allauth-openapi.json & Plaude Poll API.yaml and @octue/allauth-js structure
 
 export interface User {
 	id: string; // uuid
@@ -17,15 +17,19 @@ export interface Provider {
 	flows: ("provider_redirect" | "provider_token")[];
 }
 
-export interface VerifyEmailFlow {
-	id: "verify_email";
-	is_pending: boolean;
+export interface Authenticator {
+	id: number | string;
+	type: "recovery_codes" | "totp" | "webauthn";
+	created_at: number;
+	last_used_at?: number;
 }
 
-export interface ProviderSignupFlow {
-	id: "provider_signup";
-	provider: Provider;
-	is_pending: boolean;
+export interface Session {
+	id: number | string;
+	created_at: number;
+	ip: string;
+	user_agent: string;
+	is_current: boolean;
 }
 
 // Union of all possible flows
@@ -38,9 +42,11 @@ export interface Flow {
 		| "verify_email"
 		| "provider_signup"
 		| "login_by_code"
-		| "mfa_authenticate";
+		| "mfa_authenticate"
+		| "reauthenticate";
 	provider?: Provider;
 	is_pending?: boolean;
+	types?: string[]; // e.g. ["totp", "recovery_codes"]
 }
 
 export interface AuthError {
@@ -51,7 +57,11 @@ export interface AuthError {
 
 export interface BaseAuthMeta {
 	is_authenticated: boolean;
-	session_token?: string;
+}
+
+export interface AuthenticatedMeta extends BaseAuthMeta {
+	is_authenticated: true;
+	session_token?: string; // Optional if using cookies
 	access_token?: string;
 	refresh_token?: string;
 }
@@ -65,13 +75,12 @@ export interface AuthData {
 		email?: string;
 		provider?: string;
 	}>;
-	errors?: AuthError[];
 }
 
 export interface AllauthResponse<T = AuthData> {
 	status: number;
 	data?: T;
-	meta?: BaseAuthMeta;
+	meta?: BaseAuthMeta | AuthenticatedMeta;
 	errors?: AuthError[];
 }
 
@@ -79,6 +88,7 @@ export interface SigninRequest {
 	email?: string;
 	username?: string;
 	password?: string;
+	login?: string; // support generic 'login' field
 }
 
 export interface SignupRequest {
@@ -99,16 +109,21 @@ export interface ResetPasswordRequest {
 
 export interface ProviderRedirectRequest {
 	provider: string;
-	callback_url: string;
-	process: "login" | "connect";
+	callback_url?: string;
+	process?: "login" | "connect";
 }
 
 export interface ProviderTokenRequest {
 	provider: string;
-	process: "login" | "connect";
+	process?: "login" | "connect";
 	token: {
-		client_id: string;
+		client_id?: string;
 		access_token?: string;
 		id_token?: string;
+		code?: string;
 	};
+}
+
+export interface ConfirmLoginCodeRequest {
+	code: string;
 }

@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getCSRFToken } from "../lib/csrf";
 import type {
 	AllauthResponse,
+	ChangePasswordRequest,
 	ConfirmLoginCodeRequest,
 	ProviderRedirectRequest,
 	ProviderTokenRequest,
@@ -32,7 +33,7 @@ export const authApi = createApi({
 			return headers;
 		},
 	}),
-	tagTypes: ["Session"],
+	tagTypes: ["Session", "EmailAddresses", "Providers", "Configuration"],
 	endpoints: (builder) => ({
 		/**
 		 * Authenticates a user using email and password.
@@ -43,6 +44,7 @@ export const authApi = createApi({
 				method: "POST",
 				body: credentials,
 			}),
+			invalidatesTags: ["Session"],
 		}),
 
 		/**
@@ -54,6 +56,7 @@ export const authApi = createApi({
 				method: "POST",
 				body: userData,
 			}),
+			invalidatesTags: ["Session"],
 		}),
 
 		/**
@@ -98,7 +101,7 @@ export const authApi = createApi({
 		}),
 
 		/**
-		 * Validates a password reset key via GET.
+		 * Validates a password reset key/code via GET.
 		 */
 		validateResetKey: builder.query<AllauthResponse, string>({
 			query: (key) => ({
@@ -106,6 +109,42 @@ export const authApi = createApi({
 				headers: {
 					"X-Password-Reset-Key": key,
 				},
+			}),
+		}),
+
+		/**
+		 * Completes email verification.
+		 */
+		verifyEmail: builder.mutation<AllauthResponse, { key: string }>({
+			query: (body) => ({
+				url: "auth/email/verify",
+				method: "POST",
+				body,
+			}),
+			invalidatesTags: ["EmailAddresses", "Session"],
+		}),
+
+		/**
+		 * Resends the email verification code.
+		 */
+		resendEmailVerification: builder.mutation<AllauthResponse, void>({
+			query: () => ({
+				url: "auth/email/verify/resend",
+				method: "POST",
+			}),
+		}),
+
+		/**
+		 * Requests a login code (passwordless).
+		 */
+		requestLoginCode: builder.mutation<
+			AllauthResponse,
+			{ email?: string; phone?: string }
+		>({
+			query: (body) => ({
+				url: "auth/code/request",
+				method: "POST",
+				body,
 			}),
 		}),
 
@@ -146,11 +185,51 @@ export const authApi = createApi({
 				method: "POST",
 				body,
 			}),
+			invalidatesTags: ["Session"],
+		}),
+
+		/**
+		 * Changes the password for the authenticated user.
+		 */
+		changePassword: builder.mutation<AllauthResponse, ChangePasswordRequest>({
+			query: (body) => ({
+				url: "account/password/change",
+				method: "POST",
+				body,
+			}),
+		}),
+
+		/**
+		 * Lists all connected third-party accounts.
+		 */
+		getProviders: builder.query<AllauthResponse, void>({
+			query: () => "account/providers",
+			providesTags: ["Providers"],
+		}),
+
+		/**
+		 * Retrieves the static configuration of allauth.
+		 */
+		getConfiguration: builder.query<AllauthResponse, void>({
+			query: () => "config",
+			providesTags: ["Configuration"],
+		}),
+
+		/**
+		 * Refreshes the access token (app flavor).
+		 */
+		refreshToken: builder.mutation<AllauthResponse, { refresh_token: string }>({
+			query: (body) => ({
+				url: "/_allauth/app/v1/tokens/refresh",
+				method: "POST",
+				body,
+			}),
 		}),
 	}),
 });
 
 export const {
+	useGetConfigurationQuery,
 	useSigninMutation,
 	useSignupMutation,
 	useGetSessionQuery,
@@ -158,7 +237,13 @@ export const {
 	useRequestPasswordMutation,
 	useResetPasswordMutation,
 	useValidateResetKeyQuery,
+	useVerifyEmailMutation,
+	useResendEmailVerificationMutation,
+	useRequestLoginCodeMutation,
+	useConfirmLoginCodeMutation,
 	useProviderRedirectMutation,
 	useProviderTokenMutation,
-	useConfirmLoginCodeMutation,
+	useChangePasswordMutation,
+	useGetProvidersQuery,
+	useRefreshTokenMutation,
 } = authApi;

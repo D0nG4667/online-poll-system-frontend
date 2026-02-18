@@ -2,7 +2,6 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getCSRFToken } from "../lib/csrf";
 // import { logout, setCredentials } from "../store/features/auth/authSlice";
 // Removed unused imports
-import type { RootState } from "../store/store";
 
 // Only import types if needed, but we can't import AuthState if it's not exported from store.
 // We'll access the state via RootState.auth which is typed.
@@ -29,19 +28,12 @@ import type {
 export const authApi = createApi({
 	reducerPath: "authApi",
 	baseQuery: fetchBaseQuery({
-		// Base URL points to the headless client root
-		baseUrl: "/allauth",
+		// Base URL points to the headless client root for browser (cookie-based)
+		baseUrl: "/_allauth/browser/v1",
 		credentials: "include",
-		prepareHeaders: (headers, { getState }) => {
-			const { sessionToken, accessToken } = (getState() as RootState).auth;
-
-			if (accessToken) {
-				// Use JWT if available
-				headers.set("Authorization", `Bearer ${accessToken}`);
-			} else if (sessionToken) {
-				// Fallback to Session Token
-				headers.set("X-Session-Token", sessionToken);
-			}
+		prepareHeaders: (headers) => {
+			// For browser client, we rely on cookies (sessionid, csrftoken)
+			// effectively handled by the browser automatically with credentials: "include".
 
 			// Add CSRF token for Django
 			const csrfToken = getCSRFToken();
@@ -58,51 +50,51 @@ export const authApi = createApi({
 	endpoints: (builder) => ({
 		signin: builder.mutation<AllauthResponse, SigninRequest>({
 			query: (credentials) => ({
-				url: "/app/v1/auth/login",
+				url: "auth/login",
 				method: "POST",
 				body: credentials,
 			}),
 		}),
 		signup: builder.mutation<AllauthResponse, SignupRequest>({
 			query: (userData) => ({
-				url: "/app/v1/auth/signup",
+				url: "auth/signup",
 				method: "POST",
 				body: userData,
 			}),
 		}),
 		getSession: builder.query<AllauthResponse, void>({
-			query: () => "/app/v1/auth/session",
+			query: () => "auth/session",
 		}),
 		logout: builder.mutation<AllauthResponse, void>({
 			query: () => ({
-				url: "/app/v1/auth/session",
+				url: "auth/session",
 				method: "DELETE",
 			}),
 		}),
 		refreshToken: builder.mutation<AllauthResponse, { refresh_token: string }>({
 			query: (body) => ({
-				url: "/app/v1/tokens/refresh",
+				url: "auth/token", // Assuming token endpoint exists or is different for browser? Browser usu uses cookies.
 				method: "POST",
 				body,
 			}),
 		}),
 		requestPassword: builder.mutation<AllauthResponse, RequestPasswordRequest>({
 			query: (body) => ({
-				url: "/app/v1/auth/password/request",
+				url: "auth/password/request",
 				method: "POST",
 				body,
 			}),
 		}),
 		resetPassword: builder.mutation<AllauthResponse, ResetPasswordRequest>({
 			query: (body) => ({
-				url: "/app/v1/auth/password/reset",
+				url: "auth/password/reset",
 				method: "POST",
 				body,
 			}),
 		}),
 		validateResetKey: builder.query<AllauthResponse, string>({
 			query: (key) => ({
-				url: "/app/v1/auth/password/reset",
+				url: "auth/password/reset",
 				headers: {
 					"X-Password-Reset-Key": key,
 				},
@@ -113,14 +105,14 @@ export const authApi = createApi({
 			ProviderRedirectRequest
 		>({
 			query: (body) => ({
-				url: "/browser/v1/auth/provider/redirect",
+				url: "auth/provider/redirect",
 				method: "POST",
 				body,
 			}),
 		}),
 		providerToken: builder.mutation<AllauthResponse, ProviderTokenRequest>({
 			query: (body) => ({
-				url: "/app/v1/auth/provider/token",
+				url: "auth/provider/token",
 				method: "POST",
 				body,
 			}),

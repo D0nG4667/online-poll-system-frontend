@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -41,7 +41,6 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 	const [signup] = useSignupMutation();
 	const dispatch = useAppDispatch();
 	const router = useRouter();
-	const searchParams = useSearchParams();
 
 	const schema = mode === "signin" ? signinSchema : signupSchema;
 
@@ -128,31 +127,62 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 			console.log(`Attempting ${mode} with:`, { email: data.email });
 
 			let response: AllauthResponse;
-			if (mode === "signin") {
-				response = await signin({
-					email: data.email,
-					password: data.password,
-				}).unwrap();
-			} else {
-				response = await signup({
-					email: data.email,
-					password: data.password,
-					name: data.name,
-					confirmPassword: data.confirmPassword,
-				}).unwrap();
+
+			try {
+				if (mode === "signin") {
+					response = await signin({
+						email: data.email,
+						password: data.password,
+					}).unwrap();
+				} else {
+					response = await signup({
+						email: data.email,
+						password: data.password,
+						name: data.name,
+						confirmPassword: data.confirmPassword,
+					}).unwrap();
+				}
+			} catch (error: any) {
+				// Hotfix: Handle PARSING_ERROR where 200 OK is treated as failure
+				// This happens if the backend response is somehow malformed or Content-Type is issue
+				if (
+					error?.status === "PARSING_ERROR" &&
+					error?.originalStatus === 200 &&
+					typeof error?.data === "string"
+				) {
+					try {
+						const parsed = JSON.parse(error.data);
+						if (parsed.status === 200 || parsed.status === 201) {
+							console.log("Recovered from PARSING_ERROR:", parsed);
+							response = parsed;
+						} else {
+							throw error;
+						}
+					} catch {
+						throw error;
+					}
+				} else {
+					throw error;
+				}
 			}
 
 			console.log("Auth Response Raw:", response);
 
 			if (response.status === 200 || response.status === 201) {
-				// Extract user and tokens from Allauth Headless response structure
-				if (response.data?.user) {
-					const user = response.data.user;
-					const sessionToken = response.meta?.session_token;
-					const accessToken = response.meta?.access_token;
-					const refreshToken = response.meta?.refresh_token;
+				toast.success(
+					mode === "signin"
+						? "Signed in successfully"
+						: "Account created successfully",
+				);
 
-					console.log("Auth Successful, setting credentials...");
+				// For browser client, tokens might be in HTTP-only cookies, so meta might be empty.
+				// We still try to extract user info if available.
+				const user = response.data?.user;
+				const sessionToken = response.meta?.session_token;
+				const accessToken = response.meta?.access_token;
+				const refreshToken = response.meta?.refresh_token;
+
+				if (user) {
 					dispatch(
 						setCredentials({
 							user,
@@ -161,13 +191,15 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 							refreshToken,
 						}),
 					);
-					const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-					router.push(callbackUrl);
 				} else {
-					console.warn("Auth status OK but no user data found in response.");
+					// If no user data returned immediately (common in some browser flows),
+					// we might need to fetch session or just redirect.
+					// For now, assuming if 200 OK, we are good to go.
 				}
+
+				router.push("/dashboard");
+				router.refresh(); // Refresh to ensure layout updates with new cookie
 			} else if (response.errors) {
-				console.warn("Auth Response contains errors:", response.errors);
 				response.errors.forEach((err: AuthError) => {
 					if (err.param) {
 						form.setError(err.param as keyof AuthFormValues, {

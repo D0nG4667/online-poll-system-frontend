@@ -18,16 +18,14 @@ function AuthCallbackContent() {
 		if (!isLoading) {
 			if (data?.status === 200 && data.data?.user) {
 				const user = data.data.user;
+				const meta = data.meta;
+
 				let sessionToken: string | undefined;
 				let accessToken: string | undefined;
 				let refreshToken: string | undefined;
 
-				if (
-					data.meta &&
-					"is_authenticated" in data.meta &&
-					(data.meta as AuthenticatedMeta).is_authenticated
-				) {
-					const authenticatedMeta = data.meta as AuthenticatedMeta;
+				if (meta?.is_authenticated) {
+					const authenticatedMeta = meta as AuthenticatedMeta;
 					sessionToken = authenticatedMeta.session_token;
 					accessToken = authenticatedMeta.access_token;
 					refreshToken = authenticatedMeta.refresh_token;
@@ -46,7 +44,8 @@ function AuthCallbackContent() {
 				router.push("/dashboard");
 			} else if (isError || (data && data.status !== 200)) {
 				console.error("Auth Callback Error:", data || error);
-				toast.error("Authentication failed. Please try again.");
+				const msg = data?.errors?.[0]?.message || "Authentication failed.";
+				toast.error(msg);
 				router.push("/signin");
 			}
 		}

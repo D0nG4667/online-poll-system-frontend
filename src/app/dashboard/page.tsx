@@ -145,18 +145,20 @@ export default function DashboardPage() {
 										<button
 											key={poll.id}
 											type="button"
-											className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors text-left"
+											className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors text-left group"
 											onClick={() => router.push(`/polls/${poll.slug}`)}
 										>
 											<div className="flex-1">
-												<p className="font-medium">{poll.title}</p>
+												<p className="font-medium group-hover:text-orange-600 transition-colors">
+													{poll.title}
+												</p>
 												<p className="text-sm text-muted-foreground">
 													{new Date(poll.created_at).toLocaleDateString()}
 												</p>
 											</div>
-											<Button variant="ghost" size="sm">
+											<div className="text-sm font-medium text-muted-foreground group-hover:text-orange-600 group-hover:translate-x-1 transition-all">
 												View →
-											</Button>
+											</div>
 										</button>
 									))}
 								</div>

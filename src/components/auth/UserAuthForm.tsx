@@ -8,10 +8,10 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Icons } from "@/components/icons";
-// import type * as z from "zod"; // Removed unused import
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getFirstErrorMessage, mapAllauthErrors } from "@/lib/auth-errors";
 import { getCSRFToken } from "@/lib/csrf";
 import { signinSchema, signupSchema } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
@@ -22,10 +22,54 @@ import {
 } from "@/services/authApi";
 import { setCredentials } from "@/store/features/auth/authSlice";
 import { useAppDispatch } from "@/store/hooks";
-import type { AllauthResponse, AuthenticatedMeta } from "@/types/auth";
+import type {
+	AllauthResponse,
+	AuthenticatedData,
+	AuthenticatedMeta,
+	AuthenticationRequiredData,
+} from "@/types/auth";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
 	mode: "signin" | "signup";
+}
+
+/**
+ * Redirects the user to a social provider for authentication.
+ */
+function redirectToProvider(
+	provider: string,
+	authProcess: "login" | "connect" = "login",
+) {
+	const csrfToken = getCSRFToken();
+	const frontendUrl =
+		process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
+	const callbackUrl = `${frontendUrl}/account/provider/callback`;
+	const action = "/_allauth/browser/v1/auth/provider/redirect";
+
+	const form = document.createElement("form");
+	form.method = "POST";
+	form.action = action;
+
+	const data: Record<string, string> = {
+		provider,
+		process: authProcess,
+		callback_url: callbackUrl,
+	};
+
+	if (csrfToken) {
+		data.csrfmiddlewaretoken = csrfToken;
+	}
+
+	for (const [key, value] of Object.entries(data)) {
+		const input = document.createElement("input");
+		input.type = "hidden";
+		input.name = key;
+		input.value = value;
+		form.appendChild(input);
+	}
+
+	document.body.appendChild(form);
+	form.submit();
 }
 
 interface AuthFormValues {
@@ -57,64 +101,35 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 	async function handleGoogleLogin() {
 		setIsLoading(true);
 		try {
-			// As per allauth headless documentation/official client:
-			// "As calling this endpoint results in a user facing redirect (302),
-			// this call is only available in a browser, and must be called in a
-			// synchronous (non-XHR) manner."
+			// Prime or check session state
+			console.log("Checking session state before Google login...");
+			try {
+				const session = await dispatch(
+					authApi.endpoints.getSession.initiate(),
+				).unwrap();
 
-			// If CSRF token is missing (incognito mode/first visit), prime the session
-			let csrfToken = getCSRFToken();
-			if (!csrfToken) {
-				console.log("No CSRF token found. Priming session...");
-				// Trigger a session request to get the cookie from backend
-				// We don't unwrap here because a 401 is expected but it still sets the cookie
-				try {
-					await dispatch(authApi.endpoints.getSession.initiate()).unwrap();
-					// Small wait to ensure browser processes the Set-Cookie header
-					await new Promise((resolve) => setTimeout(resolve, 100));
-				} catch (_e) {
-					// 401 is expected for guest users, cookie should still be set
-					console.log("Session primed (ignore expected 401)");
-					await new Promise((resolve) => setTimeout(resolve, 100));
+				if (session.meta?.is_authenticated || session.data?.user) {
+					console.log("User already authenticated. Redirecting to dashboard.");
+					const data = session.data as AuthenticatedData;
+					const user = data?.user;
+					if (user) {
+						dispatch(
+							setCredentials({
+								user,
+								sessionToken: session.meta?.session_token,
+								accessToken: session.meta?.access_token,
+								refreshToken: session.meta?.refresh_token,
+							}),
+						);
+					}
+					router.push("/dashboard");
+					return;
 				}
-				csrfToken = getCSRFToken();
-				console.log(
-					"CSRF Token after priming:",
-					csrfToken ? "Found" : "Missing",
-				);
+			} catch (_e) {
+				// 401 is fine, proceed to redirect
 			}
 
-			// The callback URL must match exactly what is configured in Google Cloud Console
-			const frontendUrl =
-				process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
-			const callbackUrl = `${frontendUrl}/account/provider/callback`;
-			const action = "/_allauth/browser/v1/auth/provider/redirect";
-
-			// Create a form and submit it synchronously
-			const form = document.createElement("form");
-			form.method = "POST";
-			form.action = action;
-
-			const data: Record<string, string> = {
-				provider: "google",
-				process: "login",
-				callback_url: callbackUrl,
-			};
-
-			if (csrfToken) {
-				data.csrfmiddlewaretoken = csrfToken;
-			}
-
-			for (const [key, value] of Object.entries(data)) {
-				const input = document.createElement("input");
-				input.type = "hidden";
-				input.name = key;
-				input.value = value;
-				form.appendChild(input);
-			}
-
-			document.body.appendChild(form);
-			form.submit();
+			redirectToProvider("google");
 		} catch (error) {
 			console.error("Google Login Error:", error);
 			toast.error("Failed to initiate Google login");
@@ -126,6 +141,34 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 		setIsLoading(true);
 
 		try {
+			// Prime session and check for existing auth state
+			console.log("Checking session state before form submission...");
+			try {
+				const session = await dispatch(
+					authApi.endpoints.getSession.initiate(),
+				).unwrap();
+
+				if (session.meta?.is_authenticated || session.data?.user) {
+					console.log("User already authenticated. Redirecting to dashboard.");
+					const authData = session.data as AuthenticatedData;
+					const user = authData?.user;
+					if (user) {
+						dispatch(
+							setCredentials({
+								user,
+								sessionToken: session.meta?.session_token,
+								accessToken: session.meta?.access_token,
+								refreshToken: session.meta?.refresh_token,
+							}),
+						);
+					}
+					router.push("/dashboard");
+					return;
+				}
+			} catch (_e) {
+				// 401 is expected for guests, proceed
+			}
+
 			console.log(`Attempting ${mode} with:`, { email: data.email });
 
 			let response: AllauthResponse;
@@ -137,9 +180,12 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 						password: data.password,
 					}).unwrap();
 				} else {
+					// Some Allauth configs require 'username' or custom fields.
+					// We'll send what we have and let the mapping utility handle errors.
 					response = await signup({
 						email: data.email,
 						password: data.password,
+						username: data.email.split("@")[0], // Fallback username
 						name: data.name,
 						confirmPassword: data.confirmPassword,
 					}).unwrap();
@@ -151,111 +197,112 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 					data?: unknown;
 				};
 
-				// Hotfix: Handle PARSING_ERROR
+				// HANDLE 409 CONFLICT (Already Logged In)
+				if (error.status === 409 || error.originalStatus === 409) {
+					console.log("Conflict 409: Already logged in. Syncing session...");
+					try {
+						const session = await dispatch(
+							authApi.endpoints.getSession.initiate(),
+						).unwrap();
+						const authData = session.data as AuthenticatedData;
+						if (authData?.user) {
+							dispatch(
+								setCredentials({
+									user: authData.user,
+									sessionToken: session.meta?.session_token,
+									accessToken: session.meta?.access_token,
+									refreshToken: session.meta?.refresh_token,
+								}),
+							);
+						}
+					} catch (_e) {
+						// Session sync failed
+					}
+					toast.success("Signed in successfully");
+					router.push("/dashboard");
+					return;
+				}
+
+				// Handle PARSING_ERROR (common workaround for 200/201 string responses)
 				if (
 					error.status === "PARSING_ERROR" &&
 					error.originalStatus === 200 &&
 					typeof error.data === "string"
 				) {
-					try {
-						const parsed = JSON.parse(error.data) as AllauthResponse;
-						if (parsed.status === 200 || parsed.status === 201) {
-							console.log("Recovered from PARSING_ERROR:", parsed);
-							response = parsed;
-						} else {
-							throw err;
-						}
-					} catch {
-						throw err;
-					}
+					response = JSON.parse(error.data);
 				} else {
-					throw err;
+					// Handle RTK Query Error structure
+					const rtkError = err as {
+						status: number | string;
+						data?: AllauthResponse;
+					};
+
+					if (rtkError.data) {
+						mapAllauthErrors(
+							rtkError.data as AllauthResponse,
+							form.setError,
+							(msg) => toast.error(msg),
+						);
+					} else {
+						const msg =
+							getFirstErrorMessage(
+								rtkError.data as unknown as AllauthResponse,
+							) || "An unexpected error occurred.";
+						toast.error(msg);
+					}
+					return;
 				}
 			}
 
 			console.log("Auth Response:", response);
 
 			if (response.status === 200 || response.status === 201) {
-				toast.success(
-					mode === "signin"
-						? "Signed in successfully"
-						: "Account created successfully",
-				);
+				const isSuccess =
+					response.meta?.is_authenticated ||
+					(response.status === 200 && response.data?.user);
 
-				const meta = response.meta;
-				const user = response.data?.user;
-
-				if (user) {
-					let sessionToken: string | undefined;
-					let accessToken: string | undefined;
-					let refreshToken: string | undefined;
-
-					if (
-						meta &&
-						"is_authenticated" in meta &&
-						(meta as AuthenticatedMeta).is_authenticated
-					) {
-						const authenticatedMeta = meta as AuthenticatedMeta;
-						sessionToken = authenticatedMeta.session_token;
-						accessToken = authenticatedMeta.access_token;
-						refreshToken = authenticatedMeta.refresh_token;
-					}
-
-					dispatch(
-						setCredentials({
-							user,
-							sessionToken,
-							accessToken,
-							refreshToken,
-						}),
+				if (isSuccess) {
+					toast.success(
+						mode === "signin"
+							? "Signed in successfully"
+							: "Account created successfully",
 					);
-				}
 
-				router.push("/dashboard");
-				router.refresh();
-			} else if (response.errors && response.errors.length > 0) {
-				response.errors.forEach((err) => {
-					if (err.param) {
-						form.setError(err.param as keyof AuthFormValues, {
-							message: err.message,
-						});
-					} else {
-						toast.error(err.message || "An error occurred");
+					const data = response.data as AuthenticatedData;
+					const user = data?.user;
+					if (user) {
+						const meta = response.meta as AuthenticatedMeta;
+						dispatch(
+							setCredentials({
+								user,
+								sessionToken: meta?.session_token,
+								accessToken: meta?.access_token,
+								refreshToken: meta?.refresh_token,
+							}),
+						);
 					}
-				});
+					router.push("/dashboard");
+					router.refresh();
+				} else {
+					// Check for pending flows (MFA, Email Verification etc)
+					const data = response.data as AuthenticationRequiredData;
+					if (data?.flows && data.flows.length > 0) {
+						const flow = data.flows[0];
+						console.log("Pending Flow:", flow);
+						// TODO: Route to specific flow pages
+						toast.info("A pending authentication step is required.");
+					} else {
+						mapAllauthErrors(response, form.setError, (msg) =>
+							toast.error(msg),
+						);
+					}
+				}
 			} else {
-				toast.error("An unexpected error occurred.");
+				mapAllauthErrors(response, form.setError, (msg) => toast.error(msg));
 			}
 		} catch (err: unknown) {
-			console.error("Auth Submission Error", err);
-
-			// Handle RTK Query Error structure
-			const rtkError = err as {
-				status: number | string;
-				data?: AllauthResponse;
-			};
-
-			if (rtkError.data?.errors) {
-				rtkError.data.errors.forEach((authErr) => {
-					if (authErr.param) {
-						form.setError(authErr.param as keyof AuthFormValues, {
-							message: authErr.message,
-						});
-					} else {
-						toast.error(authErr.message || "An error occurred");
-					}
-				});
-			} else if (rtkError.status === 401) {
-				toast.error("Invalid credentials.");
-			} else if (rtkError.status === 400) {
-				toast.error("Bad request. Please check your inputs.");
-			} else if (rtkError.status === 405) {
-				toast.error(
-					"API configuration error (405). Please contact support. (Trailing slash issue resolved?)",
-				);
-			} else {
-				toast.error("An unexpected error occurred. Please try again.");
-			}
+			console.error("Critical Auth Error:", err);
+			toast.error("A critical error occurred. Please try again.");
 		} finally {
 			setIsLoading(false);
 		}

@@ -7,9 +7,9 @@ import {
 	LayoutDashboard,
 	Plus,
 	Settings,
-	Vote,
 } from "lucide-react";
 import type * as React from "react";
+import { Logo } from "@/components/Logo";
 import { NavMain } from "@/components/layout/NavMain";
 import { NavUser } from "@/components/layout/NavUser";
 import {
@@ -63,9 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							size="lg"
 							className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center"
 						>
-							<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-								<Vote className="size-4" />
-							</div>
+							<Logo iconClassName="size-5" />
 							<div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
 								<span className="truncate font-semibold uppercase tracking-wider">
 									Plaude Poll

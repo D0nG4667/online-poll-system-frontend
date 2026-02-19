@@ -3,6 +3,7 @@
 import Link from "next/link";
 import GuestGuard from "@/components/auth/GuestGuard";
 import { UserAuthForm } from "@/components/auth/UserAuthForm";
+import { Logo } from "@/components/Logo";
 import { buttonVariants } from "@/components/ui/button";
 import {
 	Card,
@@ -18,38 +19,23 @@ import { cn } from "@/lib/utils";
 export default function SigninPage() {
 	return (
 		<GuestGuard>
-			<div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+			<div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
 				<div className="absolute right-4 top-4 md:right-8 md:top-8 flex items-center gap-4">
-					<ModeToggle />
 					<Link
 						href="/signup"
 						className={cn(buttonVariants({ variant: "ghost" }))}
 					>
 						Sign Up
 					</Link>
+					<ModeToggle />
 				</div>
 				<div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
 					<div className="absolute inset-0 bg-zinc-900" />
 					<Link
 						href="/"
-						className="relative z-20 flex items-center text-lg font-medium hover:opacity-80 transition-opacity"
+						className="relative z-20 flex items-center hover:opacity-80 transition-opacity"
 					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							className="mr-2 h-6 w-6"
-							role="img"
-							aria-labelledby="login-logo-title"
-						>
-							<title id="login-logo-title">Plaude Poll Logo</title>
-							<path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-						</svg>
-						Plaude Poll
+						<Logo showText textClassName="text-white text-lg" />
 					</Link>
 					<div className="relative z-20 mt-auto">
 						<blockquote className="space-y-2">
@@ -62,7 +48,7 @@ export default function SigninPage() {
 						</blockquote>
 					</div>
 				</div>
-				<div className="lg:p-8 flex items-center justify-center min-h-[calc(100vh-64px)] lg:min-h-screen">
+				<div className="p-4 pt-32 pb-8 lg:p-8 lg:pt-32 flex items-start justify-center lg:min-h-screen">
 					<div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
 						<Card className="border-none shadow-none lg:border lg:shadow-sm">
 							<CardHeader className="space-y-1 text-center">

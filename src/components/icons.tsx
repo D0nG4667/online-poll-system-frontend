@@ -1,7 +1,6 @@
 import {
 	AlertTriangle,
 	ArrowRight,
-	Command,
 	Github,
 	Loader2,
 	Lock,
@@ -11,10 +10,12 @@ import {
 	User,
 } from "lucide-react";
 
+import { Logo } from "@/components/Logo";
+
 export type Icon = LucideIcon;
 
 export const Icons = {
-	logo: Command,
+	logo: (props: React.ComponentProps<typeof Logo>) => <Logo {...props} />,
 	spinner: Loader2,
 	warning: AlertTriangle,
 	user: User,

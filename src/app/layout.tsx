@@ -20,6 +20,10 @@ export const metadata: Metadata = {
 	title: "Plaude Poll | Create a poll in seconds",
 	description:
 		"The simplest way to create and share polls. Get instant results and analytics with Plaude Poll.",
+	icons: {
+		icon: "/icon.svg",
+		apple: "/icon.svg",
+	},
 };
 
 export default function RootLayout({

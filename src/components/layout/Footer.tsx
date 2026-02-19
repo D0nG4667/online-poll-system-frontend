@@ -1,5 +1,6 @@
 import { Github, Linkedin, MessageSquare, Twitter } from "lucide-react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 
 export function Footer() {
 	return (
@@ -7,12 +8,7 @@ export function Footer() {
 			<div className="container mx-auto px-4 md:px-6">
 				<div className="grid grid-cols-2 md:grid-cols-5 gap-8">
 					<div className="col-span-2 space-y-6">
-						<div className="flex items-center gap-2 font-black text-2xl tracking-tight">
-							<div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground text-sm font-black">
-								P
-							</div>
-							Plaude Poll
-						</div>
+						<Logo showText textClassName="text-2xl" />
 						<p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
 							Making it easy to create instant, real-time polls and surveys for
 							free. Trusted by millions worldwide.

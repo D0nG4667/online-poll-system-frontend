@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { Icons } from "@/components/icons";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -103,7 +104,7 @@ export default function ForgotPasswordPage() {
 				<Card className="border-shadow-sm">
 					<CardHeader className="space-y-1 text-center">
 						<div className="flex justify-center mb-4">
-							<Icons.logo className="h-10 w-10 text-primary" />
+							<Logo iconClassName="h-10 w-10 text-primary" />
 						</div>
 						<CardTitle className="text-2xl font-bold italic tracking-tight text-unicorn">
 							Forgot Password

@@ -46,13 +46,17 @@ export async function proxyRequest(
 
 	// Add Forwarded headers to tell the backend about the original request
 	// This helps with building correct Absolute URLs for redirects.
-	// EXCEPTION: For OAuth provider redirects, we SHOWN NOT set X-Forwarded-Host
-	// so the backend can use its own domain as the redirect_uri for the provider (like Google).
+	// EXCEPTION: For OAuth provider redirects, we MUST force the backend to use its own domain
+	// so the redirect_uri sent to Google matches the "Authorized Redirect URIs" in Google Console.
 	const isOAuthRedirect = pathname.startsWith(
 		"/_allauth/browser/v1/auth/provider/redirect",
 	);
 
-	if (!isOAuthRedirect) {
+	if (isOAuthRedirect) {
+		// Force the backend to see itself as the host for the Google Callback URI
+		const backendHost = new URL(BACKEND_URL).host;
+		requestHeaders.set("X-Forwarded-Host", backendHost);
+	} else {
 		requestHeaders.set("X-Forwarded-Host", request.nextUrl.host);
 	}
 

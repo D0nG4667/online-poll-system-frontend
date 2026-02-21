@@ -28,8 +28,6 @@ export async function proxyRequest(
 
 	// OVERRIDE: Set Origin and Referer to match the backend expectations
 	// This is key for Django CSRF protection.
-	// We want to pass the headers from the request but swap the HOST to match the backend if needed,
-	// or ensure the origin is trusted.
 	const origin = request.headers.get("origin");
 	if (origin) {
 		requestHeaders.set("Origin", BACKEND_URL);
@@ -45,6 +43,20 @@ export async function proxyRequest(
 			requestHeaders.set("Referer", BACKEND_URL);
 		}
 	}
+
+	// Add Forwarded headers to tell the backend about the original request
+	// This helps with building correct Absolute URLs for redirects.
+	requestHeaders.set("X-Forwarded-Host", request.nextUrl.host);
+	requestHeaders.set(
+		"X-Forwarded-Proto",
+		request.nextUrl.protocol.replace(":", ""),
+	);
+	requestHeaders.set(
+		"X-Forwarded-For",
+		request.headers.get("x-forwarded-for") ||
+			request.headers.get("x-real-ip") ||
+			"127.0.0.1",
+	);
 
 	// Delete headers that can cause issues when proxied
 	requestHeaders.delete("host");
@@ -70,10 +82,14 @@ export async function proxyRequest(
 			// Consume body into an ArrayBuffer – avoids "fetch failed" caused by streaming mismatches
 			let bodyBuffer: ArrayBuffer | Uint8Array = await request.arrayBuffer();
 
+			const normalizedPath = pathname.endsWith("/")
+				? pathname.slice(0, -1)
+				: pathname;
+
 			// SECURITY HOTFIX: Intercept OAuth redirect requests to override callback_url server-side
 			// This prevents redirect_uri_mismatch while keeping BACKEND_URL private.
 			if (
-				pathname === "/_allauth/browser/v1/auth/provider/redirect" &&
+				normalizedPath === "/_allauth/browser/v1/auth/provider/redirect" &&
 				request.method === "POST"
 			) {
 				const contentType = request.headers.get("content-type") || "";

@@ -42,7 +42,9 @@ function redirectToProvider(
 ) {
 	const csrfToken = getCSRFToken();
 	const frontendUrl =
-		process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
+		typeof window !== "undefined"
+			? window.location.origin
+			: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
 
 	// We use the frontend callback here. The server-side proxy (lib/proxy.ts)
 	// will intercept this and swap it for the backend callback in production

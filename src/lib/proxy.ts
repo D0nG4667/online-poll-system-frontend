@@ -27,6 +27,11 @@ export async function proxyRequest(
 		`[Proxy] Incoming Method: ${request.method} | Destination: ${url.toString()}`,
 	);
 
+	console.log(
+		`[Proxy] Incoming Cookies:`,
+		request.headers.get("cookie") || "None",
+	);
+
 	const requestHeaders = new Headers(request.headers);
 
 	// Extract CSRF token from cookies if present

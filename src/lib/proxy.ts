@@ -46,7 +46,16 @@ export async function proxyRequest(
 
 	// Add Forwarded headers to tell the backend about the original request
 	// This helps with building correct Absolute URLs for redirects.
-	requestHeaders.set("X-Forwarded-Host", request.nextUrl.host);
+	// EXCEPTION: For OAuth provider redirects, we SHOWN NOT set X-Forwarded-Host
+	// so the backend can use its own domain as the redirect_uri for the provider (like Google).
+	const isOAuthRedirect = pathname.startsWith(
+		"/_allauth/browser/v1/auth/provider/redirect",
+	);
+
+	if (!isOAuthRedirect) {
+		requestHeaders.set("X-Forwarded-Host", request.nextUrl.host);
+	}
+
 	requestHeaders.set(
 		"X-Forwarded-Proto",
 		request.nextUrl.protocol.replace(":", ""),
@@ -98,11 +107,14 @@ export async function proxyRequest(
 					const params = new URLSearchParams(bodyString);
 
 					if (params.get("provider") === "google") {
-						const backendCallback = `${BACKEND_URL}/accounts/google/login/callback/`;
+						// The final destination after the entire OAuth flow should be our frontend callback page.
+						// We don't need to hardcode the backend URL here anymore because we've suppressed
+						// X-Forwarded-Host, allowing the backend to use its own domain for Google.
+						const frontendCallback = `${request.nextUrl.origin}/account/provider/callback`;
 						console.log(
-							`[Proxy] Overriding Google callback_url to: ${backendCallback}`,
+							`[Proxy] Ensuring Google callback_url points to frontend: ${frontendCallback}`,
 						);
-						params.set("callback_url", backendCallback);
+						params.set("callback_url", frontendCallback);
 						bodyBuffer = new TextEncoder().encode(params.toString());
 					}
 				}

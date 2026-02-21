@@ -6,8 +6,9 @@ export async function GET(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	console.log(`[Allauth Route] GET /allauth/${path.join("/")}`);
-	return proxyRequest(request, ["_allauth", ...path], {
+	const prefix = path[0] === "accounts" ? "" : "_allauth";
+	console.log(`[Allauth Route] GET ${prefix}/${path.join("/")}`);
+	return proxyRequest(request, [prefix, ...path].filter(Boolean), {
 		addTrailingSlash: false,
 	});
 }
@@ -17,8 +18,9 @@ export async function POST(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	console.log(`[Allauth Route] POST /allauth/${path.join("/")}`);
-	return proxyRequest(request, ["_allauth", ...path], {
+	const prefix = path[0] === "accounts" ? "" : "_allauth";
+	console.log(`[Allauth Route] POST ${prefix}/${path.join("/")}`);
+	return proxyRequest(request, [prefix, ...path].filter(Boolean), {
 		addTrailingSlash: false,
 	});
 }
@@ -28,7 +30,8 @@ export async function PUT(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	return proxyRequest(request, ["_allauth", ...path], {
+	const prefix = path[0] === "accounts" ? "" : "_allauth";
+	return proxyRequest(request, [prefix, ...path].filter(Boolean), {
 		addTrailingSlash: false,
 	});
 }
@@ -38,7 +41,8 @@ export async function DELETE(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	return proxyRequest(request, ["_allauth", ...path], {
+	const prefix = path[0] === "accounts" ? "" : "_allauth";
+	return proxyRequest(request, [prefix, ...path].filter(Boolean), {
 		addTrailingSlash: false,
 	});
 }
@@ -48,7 +52,8 @@ export async function PATCH(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	return proxyRequest(request, ["_allauth", ...path], {
+	const prefix = path[0] === "accounts" ? "" : "_allauth";
+	return proxyRequest(request, [prefix, ...path].filter(Boolean), {
 		addTrailingSlash: false,
 	});
 }

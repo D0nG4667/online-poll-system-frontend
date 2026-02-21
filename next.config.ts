@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
 				source: "/_allauth/:path*",
 				destination: "/allauth/:path*",
 			},
+			{
+				source: "/accounts/:path*",
+				destination: "/allauth/accounts/:path*",
+			},
 			// Fallback for other API calls if needed, though they might be direct
 			{
 				source: "/api/:path*",

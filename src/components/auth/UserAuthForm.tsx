@@ -46,9 +46,8 @@ function redirectToProvider(
 			? window.location.origin
 			: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
 
-	// We use the frontend callback here. The server-side proxy (lib/proxy.ts)
-	// will intercept this and swap it for the backend callback in production
-	// to avoid redirect_uri_mismatch while keeping BACKEND_URL private.
+	// Delegate callback resolution to the server-side proxy (src/lib/proxy.ts).
+	// This ensures the correct redirect_uri is used without exposing backend URLs to the client.
 	const callbackUrl = `${frontendUrl}/account/provider/callback`;
 
 	const action = "/_allauth/browser/v1/auth/provider/redirect";

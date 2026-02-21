@@ -11,9 +11,13 @@ export async function proxyRequest(
 	segments: string[],
 	options: { addTrailingSlash?: boolean } = { addTrailingSlash: true },
 ) {
-	// Always add trailing slash for Django API paths if requested (Django is strict about this)
-	// segments[0] is usually "_allauth"
+	// Normalize the path for consistent comparison and Django routing.
+	// segments[0] can be "_allauth" or "accounts" (from the catch-all route).
 	const pathname = `/${segments.join("/")}${options.addTrailingSlash ? "/" : ""}`;
+	const normalizedPath = pathname.endsWith("/")
+		? pathname.slice(0, -1)
+		: pathname;
+
 	console.log(`[Proxy] Forwarding to: ${pathname}`);
 	const url = new URL(pathname, BACKEND_URL);
 	url.search = request.nextUrl.search;
@@ -46,14 +50,14 @@ export async function proxyRequest(
 
 	// Add Forwarded headers to tell the backend about the original request
 	// This helps with building correct Absolute URLs for redirects.
-	// EXCEPTION: For OAuth provider redirects, we MUST force the backend to use its own domain
-	// so the redirect_uri sent to Google matches the "Authorized Redirect URIs" in Google Console.
-	const isOAuthRedirect = pathname.startsWith(
-		"/_allauth/browser/v1/auth/provider/redirect",
-	);
+	// Security/Protocol: For OAuth provider redirects (initiation), we force the backend host.
+	// This ensures the redirect_uri sent to Google matches the authorized domain list.
+	// For all other requests (including callbacks), we use the frontend host to ensure
+	// that session cookies are correctly scoped to the user's browser domain.
+	const isOAuthInitiation =
+		normalizedPath === "/_allauth/browser/v1/auth/provider/redirect";
 
-	if (isOAuthRedirect) {
-		// Force the backend to see itself as the host for the Google Callback URI
+	if (isOAuthInitiation) {
 		const backendHost = new URL(BACKEND_URL).host;
 		requestHeaders.set("X-Forwarded-Host", backendHost);
 	} else {
@@ -95,25 +99,17 @@ export async function proxyRequest(
 			// Consume body into an ArrayBuffer – avoids "fetch failed" caused by streaming mismatches
 			let bodyBuffer: ArrayBuffer | Uint8Array = await request.arrayBuffer();
 
-			const normalizedPath = pathname.endsWith("/")
-				? pathname.slice(0, -1)
-				: pathname;
-
-			// SECURITY HOTFIX: Intercept OAuth redirect requests to override callback_url server-side
-			// This prevents redirect_uri_mismatch while keeping BACKEND_URL private.
-			if (
-				normalizedPath === "/_allauth/browser/v1/auth/provider/redirect" &&
-				request.method === "POST"
-			) {
+			// Intercept Google OAuth requests to manage redirect URIs server-side.
+			if (isOAuthInitiation && request.method === "POST") {
 				const contentType = request.headers.get("content-type") || "";
 				if (contentType.includes("application/x-www-form-urlencoded")) {
 					const bodyString = new TextDecoder().decode(bodyBuffer);
 					const params = new URLSearchParams(bodyString);
 
 					if (params.get("provider") === "google") {
-						// The final destination after the entire OAuth flow should be our frontend callback page.
-						// We don't need to hardcode the backend URL here anymore because we've suppressed
-						// X-Forwarded-Host, allowing the backend to use its own domain for Google.
+						// Finalize the OAuth flow by directing the user back to the frontend callback.
+						// By suppressing X-Forwarded-Host above, the backend handles Google communication
+						// using its own domain, ensuring a valid handshake.
 						const frontendCallback = `${request.nextUrl.origin}/account/provider/callback`;
 						console.log(
 							`[Proxy] Ensuring Google callback_url points to frontend: ${frontendCallback}`,

@@ -43,7 +43,16 @@ function redirectToProvider(
 	const csrfToken = getCSRFToken();
 	const frontendUrl =
 		process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
-	const callbackUrl = `${frontendUrl}/account/provider/callback`;
+	const backendUrl =
+		process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+	// In production, we must use the backend's callback URL to avoid redirect_uri_mismatch
+	// but only if it's the 'google' provider as per current requirements.
+	const callbackUrl =
+		provider === "google"
+			? `${backendUrl}/accounts/google/login/callback/`
+			: `${frontendUrl}/account/provider/callback`;
+
 	const action = "/_allauth/browser/v1/auth/provider/redirect";
 
 	const form = document.createElement("form");
@@ -169,7 +178,7 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 				// 401 is expected for guests, proceed
 			}
 
-			console.log(`Attempting ${mode} with:`, { email: data.email });
+			console.log(`Attempting ${mode} with payload:`, { email: data.email });
 
 			let response: AllauthResponse;
 
@@ -180,14 +189,13 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
 						password: data.password,
 					}).unwrap();
 				} else {
-					// Some Allauth configs require 'username' or custom fields.
-					// We'll send what we have and let the mapping utility handle errors.
+					// Ensure we send what Allauth Headless expects
 					response = await signup({
 						email: data.email,
 						password: data.password,
-						username: data.email.split("@")[0], // Fallback username
-						name: data.name,
-						confirmPassword: data.confirmPassword,
+						username: data.email.split("@")[0], // Fallback if required
+						...(data.name ? { name: data.name } : {}),
+						// confirmPassword might not be needed by the headless API
 					}).unwrap();
 				}
 			} catch (err: unknown) {

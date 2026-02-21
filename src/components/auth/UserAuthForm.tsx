@@ -43,15 +43,11 @@ function redirectToProvider(
 	const csrfToken = getCSRFToken();
 	const frontendUrl =
 		process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001";
-	const backendUrl =
-		process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
-	// In production, we must use the backend's callback URL to avoid redirect_uri_mismatch
-	// but only if it's the 'google' provider as per current requirements.
-	const callbackUrl =
-		provider === "google"
-			? `${backendUrl}/accounts/google/login/callback/`
-			: `${frontendUrl}/account/provider/callback`;
+	// We use the frontend callback here. The server-side proxy (lib/proxy.ts)
+	// will intercept this and swap it for the backend callback in production
+	// to avoid redirect_uri_mismatch while keeping BACKEND_URL private.
+	const callbackUrl = `${frontendUrl}/account/provider/callback`;
 
 	const action = "/_allauth/browser/v1/auth/provider/redirect";
 

@@ -68,12 +68,35 @@ export async function proxyRequest(
 		// Only attach body for non-GET/HEAD requests
 		if (!["GET", "HEAD"].includes(request.method)) {
 			// Consume body into an ArrayBuffer – avoids "fetch failed" caused by streaming mismatches
-			const bodyBuffer = await request.arrayBuffer();
+			let bodyBuffer: ArrayBuffer | Uint8Array = await request.arrayBuffer();
+
+			// SECURITY HOTFIX: Intercept OAuth redirect requests to override callback_url server-side
+			// This prevents redirect_uri_mismatch while keeping BACKEND_URL private.
+			if (
+				pathname === "/_allauth/browser/v1/auth/provider/redirect" &&
+				request.method === "POST"
+			) {
+				const contentType = request.headers.get("content-type") || "";
+				if (contentType.includes("application/x-www-form-urlencoded")) {
+					const bodyString = new TextDecoder().decode(bodyBuffer);
+					const params = new URLSearchParams(bodyString);
+
+					if (params.get("provider") === "google") {
+						const backendCallback = `${BACKEND_URL}/accounts/google/login/callback/`;
+						console.log(
+							`[Proxy] Overriding Google callback_url to: ${backendCallback}`,
+						);
+						params.set("callback_url", backendCallback);
+						bodyBuffer = new TextEncoder().encode(params.toString());
+					}
+				}
+			}
+
 			console.log(
 				`[Proxy] Body buffered, size: ${bodyBuffer.byteLength} bytes`,
 			);
 			if (bodyBuffer.byteLength > 0) {
-				fetchOptions.body = bodyBuffer;
+				fetchOptions.body = bodyBuffer as BodyInit;
 			}
 		}
 

@@ -9,11 +9,16 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8000";
 export async function proxyRequest(
 	request: NextRequest,
 	segments: string[],
-	options: { addTrailingSlash?: boolean } = { addTrailingSlash: true },
+	options: { addTrailingSlash?: boolean } = {},
 ) {
-	// Normalize the path for consistent comparison and Django routing.
-	// segments[0] can be "_allauth" or "accounts" (from the catch-all route).
-	const pathname = `/${segments.join("/")}${options.addTrailingSlash ? "/" : ""}`;
+	// Dynamically determine if we should add a trailing slash based on the incoming request.
+	// Next.js catch-all routes usually don't include the slash in 'path' segments.
+	const shouldAddSlash =
+		options.addTrailingSlash !== undefined
+			? options.addTrailingSlash
+			: request.nextUrl.pathname.endsWith("/");
+
+	const pathname = `/${segments.join("/")}${shouldAddSlash ? "/" : ""}`;
 	const normalizedPath = pathname.endsWith("/")
 		? pathname.slice(0, -1)
 		: pathname;
@@ -25,11 +30,6 @@ export async function proxyRequest(
 	url.search = request.nextUrl.search;
 	console.log(
 		`[Proxy] Incoming Method: ${request.method} | Destination: ${url.toString()}`,
-	);
-
-	console.log(
-		`[Proxy] Incoming Cookies:`,
-		request.headers.get("cookie") || "None",
 	);
 
 	const requestHeaders = new Headers(request.headers);
@@ -117,9 +117,6 @@ export async function proxyRequest(
 				}
 			}
 
-			console.log(
-				`[Proxy] Body buffered, size: ${bodyBuffer.byteLength} bytes`,
-			);
 			if (bodyBuffer.byteLength > 0) {
 				fetchOptions.body = bodyBuffer as BodyInit;
 			}

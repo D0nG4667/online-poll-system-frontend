@@ -17,6 +17,8 @@ export async function proxyRequest(
 	const normalizedPath = pathname.endsWith("/")
 		? pathname.slice(0, -1)
 		: pathname;
+	const isOAuthInitiation =
+		normalizedPath === "/_allauth/browser/v1/auth/provider/redirect";
 
 	console.log(`[Proxy] Forwarding to: ${pathname}`);
 	const url = new URL(pathname, BACKEND_URL);
@@ -48,15 +50,9 @@ export async function proxyRequest(
 		}
 	}
 
-	// Add Forwarded headers to tell the backend about the original request
-	// This helps with building correct Absolute URLs for redirects.
-	// Security/Protocol: For OAuth provider redirects (initiation), we force the backend host.
-	// This ensures the redirect_uri sent to Google matches the authorized domain list.
-	// For all other requests (including callbacks), we use the frontend host to ensure
-	// that session cookies are correctly scoped to the user's browser domain.
-	const isOAuthInitiation =
-		normalizedPath === "/_allauth/browser/v1/auth/provider/redirect";
-
+	// Add Forwarded headers to tell the backend about the original request.
+	// We use the frontend host so the backend generates redirect URIs pointing back
+	// to our domain, ensuring that session cookies are correctly scoped and persisted.
 	if (isOAuthInitiation) {
 		const backendHost = new URL(BACKEND_URL).host;
 		requestHeaders.set("X-Forwarded-Host", backendHost);
@@ -96,7 +92,7 @@ export async function proxyRequest(
 
 		// Only attach body for non-GET/HEAD requests
 		if (!["GET", "HEAD"].includes(request.method)) {
-			// Consume body into an ArrayBuffer – avoids "fetch failed" caused by streaming mismatches
+			// Consume body into an ArrayBuffer to avoid streaming mismatches in some environments.
 			let bodyBuffer: ArrayBuffer | Uint8Array = await request.arrayBuffer();
 
 			// Intercept Google OAuth requests to manage redirect URIs server-side.

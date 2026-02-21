@@ -167,8 +167,10 @@ export async function proxyRequest(
 		// Build response headers, removing some that might cause issues when proxied back
 		const responseHeaders = new Headers();
 		response.headers.forEach((value, key) => {
-			if (key.toLowerCase() !== "content-encoding") {
-				// We'll handle cookies specially if needed, but for now let's copy everything else
+			const lowerKey = key.toLowerCase();
+			// fetch API auto-decompresses but keeps the original compressed content-length.
+			// Passing the old content-length with the decompressed stream truncates the payload.
+			if (lowerKey !== "content-encoding" && lowerKey !== "content-length") {
 				responseHeaders.append(key, value);
 			}
 		});

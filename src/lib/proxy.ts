@@ -51,14 +51,10 @@ export async function proxyRequest(
 	}
 
 	// Add Forwarded headers to tell the backend about the original request.
-	// We use the frontend host so the backend generates redirect URIs pointing back
-	// to our domain, ensuring that session cookies are correctly scoped and persisted.
-	if (isOAuthInitiation) {
-		const backendHost = new URL(BACKEND_URL).host;
-		requestHeaders.set("X-Forwarded-Host", backendHost);
-	} else {
-		requestHeaders.set("X-Forwarded-Host", request.nextUrl.host);
-	}
+	// We ALWAYS use the frontend host so the backend generates redirect URIs pointing back
+	// to our domain, ensuring that session cookies are correctly scoped and persisted
+	// by the browser mapping them to the frontend origin.
+	requestHeaders.set("X-Forwarded-Host", request.nextUrl.host);
 
 	requestHeaders.set(
 		"X-Forwarded-Proto",
@@ -153,10 +149,12 @@ export async function proxyRequest(
 				});
 
 				// IMPORTANT: Copy Set-Cookie headers to the redirect response!
+				// We strip explicit Domain attributes so the browser links the cookie to the frontend.
 				const setCookies = response.headers.getSetCookie();
 				if (setCookies.length > 0) {
 					for (const cookie of setCookies) {
-						redirectResponse.headers.append("Set-Cookie", cookie);
+						const rewrittenCookie = cookie.replace(/Domain=[^;]+;?/gi, "");
+						redirectResponse.headers.append("Set-Cookie", rewrittenCookie);
 					}
 				}
 
@@ -180,11 +178,13 @@ export async function proxyRequest(
 		});
 
 		// Explicitly copy Set-Cookie headers to avoid merging issues
-		// NextResponse.headers.set merges them, which can break browser cookie parsing
+		// NextResponse.headers.set merges them, which can break browser cookie parsing.
+		// We strip explicit Domain attributes so the browser links the cookie to the frontend.
 		const setCookies = response.headers.getSetCookie();
 		if (setCookies.length > 0) {
 			for (const cookie of setCookies) {
-				nextResponse.headers.append("Set-Cookie", cookie);
+				const rewrittenCookie = cookie.replace(/Domain=[^;]+;?/gi, "");
+				nextResponse.headers.append("Set-Cookie", rewrittenCookie);
 			}
 		}
 

@@ -49,7 +49,7 @@ export function PollTable({ polls }: PollTableProps) {
 	const handleDelete = async () => {
 		if (!deletingPoll) return;
 		try {
-			await deletePoll(deletingPoll.id).unwrap();
+			await deletePoll(deletingPoll.slug).unwrap();
 			toast.success("Poll deleted successfully");
 			setDeletingPoll(null);
 		} catch (err) {

@@ -99,7 +99,7 @@ export function EditPollForm({ poll }: EditPollFormProps) {
 		setIsSubmitting(true);
 		try {
 			// biome-ignore lint/suspicious/noExplicitAny: bypassed due to mutation payload casting
-			await updatePoll({ id: poll.id, data: values as any }).unwrap();
+			await updatePoll({ id: poll.slug, data: values as any }).unwrap();
 			toast.success("Poll updated successfully! ✨");
 			router.push("/dashboard/polls");
 		} catch (error) {

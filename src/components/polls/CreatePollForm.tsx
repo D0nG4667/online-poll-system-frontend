@@ -140,7 +140,7 @@ export function CreatePollForm() {
 			for (let i = 0; i < data.questions.length; i++) {
 				const q = data.questions[i];
 				const questionPayload = {
-					poll: poll.id,
+					poll: poll.slug, // Use slug to satisfy backend SlugRelatedField
 					text: q.text,
 					question_type: q.question_type,
 					order: i,
